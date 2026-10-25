@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Леон — макет</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, "Segoe UI", Roboto, sans-serif; background: #e9ecef; color: #222; }
+  h1 { text-align: center; font-size: 20px; margin: 16px 8px 4px; }
+  .note { text-align: center; font-size: 14px; color: #555; margin: 0 8px 12px; }
+  .frames { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; padding: 0 8px 30px; }
+  .col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .col h2 { margin: 0; font-size: 17px; }
+  .col .sub { font-size: 13px; color: #555; max-width: 340px; text-align: center; }
+  .phone { width: 340px; min-height: 690px; border-radius: 28px; overflow: hidden; border: 6px solid #222; position: relative; }
+  .hdr { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; font-weight: 700; }
+  .wallet { font-size: 20px; padding: 4px 12px; border-radius: 20px; position: relative; }
+  .wbtn { font-size: 22px; border: 0; border-radius: 14px; padding: 4px 10px; cursor: pointer; }
+  .stage { position: relative; height: 190px; display: flex; align-items: flex-end; justify-content: center; }
+  .stage svg { height: 180px; }
+  .bubble { position: absolute; top: 4px; left: 10px; max-width: 150px; padding: 8px 10px; border-radius: 14px; font-size: 14px; font-weight: 600; line-height: 1.25; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+  .demo { display: flex; gap: 10px; justify-content: center; margin: 6px 0; }
+  .demo button { font-size: 16px; font-weight: 700; padding: 8px 16px; border-radius: 14px; border: 0; cursor: pointer; color: #fff; }
+  .ok { background: #2e9e44; } .bad { background: #d9534f; }
+  .float { position: absolute; right: 0; top: -6px; font-weight: 800; animation: up 1s ease-out forwards; pointer-events: none; }
+  @keyframes up { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-40px); opacity: 0; } }
+  .happy { animation: hop .45s ease-out 2; transform-origin: 50% 100%; }
+  @keyframes hop { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-16px) scale(1.04); } }
+  .sad { animation: droop .6s ease-out forwards; transform-origin: 50% 100%; }
+  @keyframes droop { to { transform: translateY(6px) rotate(-3deg) scaleY(.96); } }
+  .shop { display: flex; gap: 6px; justify-content: center; padding: 6px 8px 12px; }
+  .shop button { border: 0; border-radius: 12px; padding: 6px 4px; width: 74px; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .shop button span { display: block; font-size: 22px; }
+  .shop button.on { outline: 3px solid #ffb300; }
+  .lbl { font-size: 13px; font-weight: 700; padding: 2px 14px; opacity: .75; }
+
+  /* ---- A: джунгли, тропинка ---- */
+  .A { background: linear-gradient(#bff0c8, #7ccf8a); }
+  .A .hdr { color: #1d5e2b; }
+  .A .wallet { background: #fff8; }
+  .A .wbtn { background: #fff8; }
+  .A .bubble { background: #fff; }
+  .A .path { position: relative; height: 250px; margin: 0 10px; }
+  .A .path svg.road { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .A .stone { position: absolute; width: 58px; height: 58px; border-radius: 50%; background: #fff; border: 4px solid #3e8e4e; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 3px 0 #2b6b38; }
+  .A .stone b { position: absolute; bottom: -18px; font-size: 10px; white-space: nowrap; color: #1d5e2b; background: #fff9; border-radius: 6px; padding: 0 3px; }
+  .A .stone.lock { background: #dfe7df; filter: grayscale(.8); }
+  .A .shop button { background: #fff9; }
+
+  /* ---- B: чиби, карточки ---- */
+  .B { background: linear-gradient(#e6dcff, #bfe3ff); }
+  .B .hdr { color: #4b3a8f; }
+  .B .wallet { background: #fff; }
+  .B .wbtn { background: #fff; }
+  .B .bubble { background: #fff; color: #4b3a8f; }
+  .B .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 4px 12px; }
+  .B .card { background: #fff; border-radius: 16px; padding: 8px 2px 6px; text-align: center; font-size: 26px; box-shadow: 0 3px 8px #4b3a8f22; }
+  .B .card b { display: block; font-size: 10px; color: #4b3a8f; line-height: 1.1; margin-top: 3px; }
+  .B .card i { display: block; font-size: 10px; font-style: normal; color: #f5a400; }
+  .B .shop button { background: #fff; color: #4b3a8f; }
+
+  /* ---- C: наклейка, список ---- */
+  .C { background: #ffe9a8; background-image: radial-gradient(#ffd56b 2px, transparent 2px); background-size: 18px 18px; }
+  .C .hdr { color: #6b3b00; }
+  .C .wallet { background: #fff; border: 3px solid #2b2b2b; }
+  .C .wbtn { background: #fff; border: 3px solid #2b2b2b; }
+  .C .bubble { background: #fff; border: 3px solid #2b2b2b; box-shadow: 3px 3px 0 #2b2b2b; }
+  .C .list { display: flex; flex-direction: column; gap: 7px; padding: 4px 14px; }
+  .C .row { display: flex; align-items: center; gap: 10px; background: #fff; border: 3px solid #2b2b2b; border-radius: 14px; padding: 6px 10px; font-weight: 800; font-size: 14px; box-shadow: 3px 3px 0 #2b2b2b; }
+  .C .row span { font-size: 22px; }
+  .C .row em { margin-left: auto; font-style: normal; color: #f5a400; font-size: 13px; }
+  .C .shop button { background: #fff; border: 3px solid #2b2b2b; }
+
+  .mini { display: grid; grid-template-columns: repeat(8, 1fr); width: 200px; margin: 8px auto; border-radius: 6px; overflow: hidden; }
+  .mini div { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 19px; line-height: 1; }
+  .pw { color: #fff; -webkit-text-stroke: 1px #333; } .pb { color: #222; }
+</style>
+</head>
+<body>
+<h1>Шахматы с Леоном — 3 варианта оформления</h1>
+<p class="note">Нажимайте «Верно / Ошибка» и вещи из магазина: Леон радуется, огорчается, меняет цвет, примеряет шмот. Включите звук: фразы читает голос браузера.</p>
+<div class="frames" id="frames"></div>
+
+<script>
+const LESSONS = [
+  ['♜', 'Расставь фигуры'], ['🔤', 'Имена клеток'], ['♟', 'Пешечный бой'], ['📖', 'Дебюты'],
+  ['🏰', 'Рокировка'], ['🛡', 'Детский мат'], ['🎯', 'Мат в 1–2'], ['👑', 'Загони короля']
+];
+const SHOP = [['🧢', 'Кепка', 10, 'cap'], ['👓', 'Очки', 15, 'glasses'], ['🧣', 'Шарф', 20, 'scarf'], ['👑', 'Корона', 50, 'crown']];
+const PRAISE = ['Ура! Молодец!', 'Здорово! Так держать!', 'Супер! Ты настоящий шахматист!'];
+const OOPS = ['Ой… Попробуй ещё разок!', 'Почти! Подумай ещё.'];
+
+const PAL = {
+  happy:   { body: '#5cc94a', dark: '#2f8f3a', belly: '#d3f58a' },
+  neutral: { body: '#4cb84a', dark: '#2b7f35', belly: '#c4ec7c' },
+  sad:     { body: '#8aa3b8', dark: '#55708a', belly: '#c3d1dc' }
+};
+const PAL_C = {
+  happy:   { body: '#32c6b0', dark: '#16806f', belly: '#ffe680' },
+  neutral: { body: '#2bb3a0', dark: '#147366', belly: '#ffe070' },
+  sad:     { body: '#9aa7b3', dark: '#5f6d79', belly: '#d4dbe1' }
+};
+
+// --- шмот: рисуется по точкам привязки варианта ---
+function cap(x, y, s)   { return `<g transform="translate(${x} ${y}) scale(${s})"><path d="M-24 2 Q-24 -24 0 -24 Q24 -24 24 2Z" fill="#e53935" stroke="#2b2b2b" stroke-width="2"/><path d="M16 0 Q34 -2 42 6 L18 6Z" fill="#b71c1c" stroke="#2b2b2b" stroke-width="2"/><circle cy="-24" r="4" fill="#fff"/></g>`; }
+function crown(x, y, s) { return `<g transform="translate(${x} ${y}) scale(${s})"><path d="M-22 4 L-22 -18 L-11 -6 L0 -24 L11 -6 L22 -18 L22 4Z" fill="#ffc107" stroke="#a87700" stroke-width="2.5" stroke-linejoin="round"/><circle cx="0" cy="-6" r="3.5" fill="#e53935"/><circle cx="-13" cy="-1" r="2.5" fill="#29b6f6"/><circle cx="13" cy="-1" r="2.5" fill="#29b6f6"/></g>`; }
+function scarf(x, y, s) { return `<g transform="translate(${x} ${y}) scale(${s})"><path d="M-26 -6 Q0 8 26 -6 L26 6 Q0 20 -26 6Z" fill="#7e57c2" stroke="#2b2b2b" stroke-width="2"/><path d="M-12 8 L-18 34 L-6 34 L-2 12Z" fill="#7e57c2" stroke="#2b2b2b" stroke-width="2"/><path d="M-22 -2 L22 -2 M-20 6 L20 6" stroke="#ffca28" stroke-width="3"/></g>`; }
+function glasses(eyes, r) {
+  let g = eyes.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#7fd3ff55" stroke="#222" stroke-width="3"/>`).join('');
+  if (eyes.length === 2) g += `<path d="M${eyes[0][0] + r} ${eyes[0][1]} Q${(eyes[0][0] + eyes[1][0]) / 2} ${eyes[0][1] - 8} ${eyes[1][0] - r} ${eyes[1][1]}" stroke="#222" stroke-width="3" fill="none"/>`;
+  else g += `<path d="M${eyes[0][0] - r} ${eyes[0][1]} L${eyes[0][0] - r - 14} ${eyes[0][1] + 2}" stroke="#222" stroke-width="3"/>`;
+  return g;
+}
+
+// --- Леон, вид сбоку (A и C) ---
+function leonSide(mood, wear, outline, pal) {
+  const c = pal[mood];
+  const o = outline ? `stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"` : '';
+  const sad = mood === 'sad';
+  const mouth = sad ? 'M172 99 Q183 91 194 97' : mood === 'happy' ? 'M170 94 Q184 104 196 88' : 'M172 96 Q184 99 195 91';
+  const lid = sad ? `<path d="M156 70 Q166 62 176 70" stroke="${c.dark}" stroke-width="4" fill="none"/>` : '';
+  let s = `<svg viewBox="0 0 220 170" xmlns="http://www.w3.org/2000/svg">
+    <path d="M5 150 Q110 136 215 152" stroke="#8a5a2b" stroke-width="10" fill="none" stroke-linecap="round"/>
+    <ellipse cx="30" cy="140" rx="12" ry="6" fill="#3fa34d" transform="rotate(-25 30 140)"/>
+    <ellipse cx="200" cy="140" rx="12" ry="6" fill="#3fa34d" transform="rotate(25 200 140)"/>
+    ${outline ? `<path d="M62 116 C28 126 14 96 34 82 C50 71 68 86 56 96 C48 102 40 94 46 89" stroke="#2b2b2b" stroke-width="18" fill="none" stroke-linecap="round"/>` : ''}
+    <path d="M62 116 C28 126 14 96 34 82 C50 71 68 86 56 96 C48 102 40 94 46 89" stroke="${c.body}" stroke-width="11" fill="none" stroke-linecap="round"/>
+    <path d="M78 118 L72 146" stroke="${c.dark}" stroke-width="9" stroke-linecap="round"/>
+    <path d="M122 120 L128 146" stroke="${c.dark}" stroke-width="9" stroke-linecap="round"/>
+    <path d="M58 112 C52 76 98 62 138 70 C156 74 164 92 158 108 C150 128 70 134 58 112Z" fill="${c.body}" ${o}/>
+    <path d="M64 116 C90 128 140 126 156 108 C150 122 100 134 64 116Z" fill="${c.belly}"/>
+    <circle cx="90" cy="86" r="6" fill="${c.dark}" opacity=".35"/><circle cx="112" cy="80" r="5" fill="${c.dark}" opacity=".35"/><circle cx="104" cy="100" r="4" fill="${c.dark}" opacity=".35"/>
+    <path d="M70 80 L76 70 L82 78 L90 68 L96 76 L104 66 L110 74 L118 66 L124 74" stroke="${c.dark}" stroke-width="3" fill="none" stroke-linejoin="round"/>
+    <path d="M90 118 L92 146" stroke="${c.body}" stroke-width="9" stroke-linecap="round"/>
+    <path d="M146 114 L152 146" stroke="${c.body}" stroke-width="9" stroke-linecap="round"/>
+    <path d="M136 82 C138 54 170 44 185 58 C200 70 202 96 188 106 C172 116 142 112 136 96Z" fill="${c.body}" ${o}/>
+    <path d="M140 66 C150 52 168 48 182 56" stroke="${c.dark}" stroke-width="3" fill="none"/>
+    <circle cx="166" cy="80" r="16" fill="${c.body}" stroke="${c.dark}" stroke-width="2.5"/>
+    <circle cx="167" cy="80" r="9.5" fill="#fff"/>
+    <circle cx="${sad ? 167 : 170}" cy="${sad ? 83 : 80}" r="${mood === 'happy' ? 5.5 : 4.5}" fill="#222"/>
+    <circle cx="${sad ? 165 : 172}" cy="${sad ? 81 : 78}" r="1.8" fill="#fff"/>
+    ${lid}
+    <path d="${mouth}" stroke="${c.dark}" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    ${mood === 'happy' ? `<circle cx="182" cy="96" r="5" fill="#ff8fa3" opacity=".7"/>` : ''}
+    ${sad ? `<path d="M158 98 Q155 106 158 110 Q162 106 158 98Z" fill="#6ec6ff"/>` : ''}`;
+  if (wear.scarf)   s += scarf(144, 104, .8);
+  if (wear.glasses) s += glasses([[167, 80]], 13);
+  if (wear.cap)     s += cap(166, 56, .9);
+  if (wear.crown)   s += crown(166, 54, .9);
+  if (mood === 'happy') s += sparkles([[30, 40], [120, 30], [205, 30]]);
+  return s + '</svg>';
+}
+
+// --- Леон-чиби, анфас (B) ---
+function leonChibi(mood, wear) {
+  const c = mood === 'sad' ? { body: '#a2a9d6', dark: '#6c73a8', belly: '#dfe2f5' }
+          : mood === 'happy' ? { body: '#7bd96a', dark: '#3c9c4a', belly: '#e6ffb0' }
+          : { body: '#6ccc5c', dark: '#358f42', belly: '#dcf7a4' };
+  const sad = mood === 'sad';
+  const mouth = sad ? 'M78 130 Q100 116 122 130' : mood === 'happy' ? 'M68 116 Q100 148 132 116 Q100 132 68 116Z' : 'M74 120 Q100 134 126 120';
+  let s = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <defs><radialGradient id="gB${mood}" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>
+    <path d="M136 168 C176 172 186 140 166 130 C150 122 140 140 152 146" stroke="${c.body}" stroke-width="13" fill="none" stroke-linecap="round"/>
+    <ellipse cx="100" cy="160" rx="40" ry="30" fill="${c.body}"/>
+    <ellipse cx="100" cy="166" rx="24" ry="18" fill="${c.belly}"/>
+    <ellipse cx="78" cy="188" rx="13" ry="7" fill="${c.dark}"/><ellipse cx="122" cy="188" rx="13" ry="7" fill="${c.dark}"/>
+    <path d="M62 62 Q100 4 138 62Z" fill="${c.dark}"/>
+    <ellipse cx="100" cy="92" rx="64" ry="52" fill="${c.body}"/>
+    <ellipse cx="100" cy="92" rx="64" ry="52" fill="url(#gB${mood})"/>
+    <circle cx="100" cy="58" r="5" fill="${c.dark}" opacity=".35"/><circle cx="84" cy="66" r="4" fill="${c.dark}" opacity=".35"/><circle cx="116" cy="66" r="4" fill="${c.dark}" opacity=".35"/>
+    <circle cx="54" cy="90" r="24" fill="${c.body}" stroke="${c.dark}" stroke-width="3"/>
+    <circle cx="146" cy="90" r="24" fill="${c.body}" stroke="${c.dark}" stroke-width="3"/>
+    <circle cx="56" cy="90" r="14" fill="#fff"/><circle cx="144" cy="90" r="14" fill="#fff"/>
+    <circle cx="${sad ? 56 : 60}" cy="${sad ? 95 : 90}" r="${mood === 'happy' ? 7.5 : 6.5}" fill="#222"/>
+    <circle cx="${sad ? 144 : 140}" cy="${sad ? 95 : 90}" r="${mood === 'happy' ? 7.5 : 6.5}" fill="#222"/>
+    <circle cx="${sad ? 54 : 62}" cy="${sad ? 92 : 87}" r="2.2" fill="#fff"/><circle cx="${sad ? 142 : 142}" cy="${sad ? 92 : 87}" r="2.2" fill="#fff"/>
+    ${sad ? `<path d="M38 74 Q54 66 70 76 M130 76 Q146 66 162 74" stroke="${c.dark}" stroke-width="4" fill="none" stroke-linecap="round"/>` : ''}
+    <path d="${mouth}" stroke="${c.dark}" stroke-width="4" fill="${mood === 'happy' ? '#d84a5f' : 'none'}" stroke-linecap="round" stroke-linejoin="round"/>
+    ${mood !== 'sad' ? `<circle cx="70" cy="116" r="7" fill="#ff8fa3" opacity=".6"/><circle cx="130" cy="116" r="7" fill="#ff8fa3" opacity=".6"/>` : ''}
+    ${sad ? `<path d="M40 112 Q36 122 40 127 Q45 122 40 112Z" fill="#6ec6ff"/>` : ''}`;
+  if (wear.scarf)   s += scarf(100, 136, 1.1);
+  if (wear.glasses) s += glasses([[56, 90], [144, 90]], 18);
+  if (wear.cap)     s += cap(100, 48, 1.2);
+  if (wear.crown)   s += crown(100, 46, 1.2);
+  if (mood === 'happy') s += sparkles([[20, 30], [180, 26], [186, 120]]);
+  return s + '</svg>';
+}
+
+function sparkles(pts) {
+  return pts.map(([x, y]) => `<path d="M${x} ${y - 9} L${x + 3} ${y - 3} L${x + 9} ${y} L${x + 3} ${y + 3} L${x} ${y + 9} L${x - 3} ${y + 3} L${x - 9} ${y} L${x - 3} ${y - 3}Z" fill="#ffd54f"/>`).join('');
+}
+
+function miniBoard(light, dark) {
+  const back = ['♜', '♞', '♝', '♛', '♚', '♝', '♞', '♜'];
+  let h = '';
+  for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+    let p = '', cls = '';
+    if (r === 0) { p = back[f]; cls = 'pb'; } if (r === 1) { p = '♟'; cls = 'pb'; }
+    if (r === 6) { p = '♟'; cls = 'pw'; } if (r === 7) { p = back[f]; cls = 'pw'; }
+    h += `<div class="${cls}" style="background:${(r + f) % 2 ? dark : light}">${p ? p + '︎' : ''}</div>`;
+  }
+  return `<div class="mini">${h}</div>`;
+}
+
+const VARIANTS = [
+  { id: 'A', name: 'A · «Джунгли»', sub: 'Леон целиком на ветке, тропинка из уроков (следующий открывается после прошлого), валюта — конфетки 🍬',
+    cur: '🍬', draw: (m, w) => leonSide(m, w, false, PAL),
+    menu() {
+      const pos = [[8, 6], [98, 30], [190, 6], [252, 76], [160, 104], [70, 120], [10, 186], [130, 190]];
+      return `<div class="lbl">Тропинка уроков</div><div class="path"><svg class="road" viewBox="0 0 316 250"><path d="M37 35 Q80 80 127 59 T219 35 Q300 60 281 105 T189 133 Q130 150 99 149 T39 215 Q90 240 159 219" stroke="#fff8" stroke-width="16" fill="none" stroke-linecap="round" stroke-dasharray="2 22"/></svg>` +
+        LESSONS.map(([ic, t], i) => `<div class="stone ${i > 2 ? 'lock' : ''}" style="left:${pos[i][0]}px;top:${pos[i][1]}px">${i > 2 ? '🔒' : ic}<b>${t}</b></div>`).join('') + '</div>' + miniBoard('#f0e6c8', '#7fae6e');
+    } },
+  { id: 'B', name: 'B · «Чиби»', sub: 'Большеголовый Леон смотрит на ребёнка, уроки — карточки со звёздочками, валюта — монетки 🪙',
+    cur: '🪙', draw: (m, w) => leonChibi(m, w),
+    menu() {
+      return `<div class="lbl" style="color:#4b3a8f">Уроки</div><div class="grid">` +
+        LESSONS.map(([ic, t], i) => `<div class="card">${ic}<b>${t}</b><i>${i < 2 ? '★★★' : i < 3 ? '★☆☆' : '☆☆☆'}</i></div>`).join('') + '</div>' + miniBoard('#f3efff', '#a99be0');
+    } },
+  { id: 'C', name: 'C · «Наклейка»', sub: 'Комикс-стиль с толстым контуром, бирюзовый Леон, уроки — список крупных кнопок, валюта — монетки 🪙',
+    cur: '🪙', draw: (m, w) => leonSide(m, w, true, PAL_C),
+    menu() {
+      return `<div class="list">` + LESSONS.slice(0, 5).map(([ic, t], i) => `<div class="row"><span>${ic}</span>${i + 1}. ${t}<em>${i < 2 ? '★★★' : '☆☆☆'}</em></div>`).join('') +
+        `<div class="row" style="justify-content:center;opacity:.6">… ещё 3 урока ниже</div></div>` + miniBoard('#fff3d1', '#e0a14a');
+    } }
+];
+
+function speak(t) {
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(t.replace(/[^\p{L}\p{N}\s.,!?…-]/gu, ''));
+    u.lang = 'ru-RU'; u.rate = 1; u.pitch = 1.3;
+    const v = speechSynthesis.getVoices().find(v => v.lang.startsWith('ru'));
+    if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+const frames = document.getElementById('frames');
+VARIANTS.forEach(V => {
+  const st = { mood: 'neutral', coins: 60, wear: {} };
+  const col = document.createElement('div');
+  col.className = 'col';
+  col.innerHTML = `<h2>${V.name}</h2><div class="sub">${V.sub}</div>
+    <div class="phone ${V.id}">
+      <div class="hdr"><span class="wallet">${V.cur} <span class="n">${st.coins}</span></span><span>Шахматы с Леоном</span><button class="wbtn" title="Гардероб">👕</button></div>
+      <div class="stage"><div class="bubble">Привет! Я Леон. Давай учиться шахматам!</div><div class="leon"></div></div>
+      <div class="demo"><button class="ok">✔ Верно</button><button class="bad">✘ Ошибка</button></div>
+      <div class="shop">${SHOP.map(([ic, n, p, k]) => `<button data-k="${k}"><span>${ic}</span>${n} · ${p}</button>`).join('')}</div>
+      ${V.menu()}
+    </div>`;
+  frames.appendChild(col);
+  const leon = col.querySelector('.leon'), bub = col.querySelector('.bubble'), wal = col.querySelector('.wallet');
+  const draw = anim => { leon.innerHTML = V.draw(st.mood, st.wear); leon.firstChild.classList.toggle(anim, !!anim); };
+  const say = t => { bub.textContent = t; speak(t); };
+  draw();
+  col.querySelector('.ok').onclick = () => {
+    st.mood = 'happy'; st.coins += 3; col.querySelector('.n').textContent = st.coins;
+    const f = document.createElement('span'); f.className = 'float'; f.textContent = '+3'; wal.appendChild(f); setTimeout(() => f.remove(), 1000);
+    say(PRAISE[Math.random() * PRAISE.length | 0]); draw('happy');
+  };
+  col.querySelector('.bad').onclick = () => { st.mood = 'sad'; say(OOPS[Math.random() * OOPS.length | 0]); draw('sad'); };
+  col.querySelectorAll('.shop button').forEach(b => b.onclick = () => {
+    const k = b.dataset.k; st.wear[k] = !st.wear[k];
+    if (k === 'cap' && st.wear.cap) st.wear.crown = false;
+    if (k === 'crown' && st.wear.crown) st.wear.cap = false;
+    col.querySelectorAll('.shop button').forEach(x => x.classList.toggle('on', !!st.wear[x.dataset.k]));
+    st.mood = 'happy'; say(st.wear[k] ? 'Ух ты! Мне идёт?' : 'Сниму пока.'); draw('happy');
+  });
+});
+</script>
+</body>
+</html>

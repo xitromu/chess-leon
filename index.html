@@ -1,0 +1,1627 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#dcd2ff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Шахматы с Леоном</title>
+<style>
+  :root {
+    --bg1: #e6dcff; --bg2: #bfe3ff; --ink: #3d2f7a; --card: #fff;
+    --light: #f3efff; --dark: #a99be0; --gold: #f5a400;
+    --bs: min(calc(100vw - 44px), 440px, calc(100vh - 330px));
+  }
+  @supports (height: 100dvh) { :root { --bs: min(calc(100vw - 44px), 440px, calc(100dvh - 330px)); } }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overscroll-behavior: none; }
+  body {
+    background: linear-gradient(var(--bg1), var(--bg2)) fixed; color: var(--ink);
+    font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; touch-action: manipulation;
+  }
+  button { font: inherit; color: inherit; }
+  #app { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; }
+  .screen { display: none; flex-direction: column; min-height: 100vh; padding-bottom: 12px; }
+  .screen.on { display: flex; }
+
+  .top { display: flex; align-items: center; gap: 8px; padding: 10px 12px 4px; }
+  .ttl { flex: 1; font-weight: 800; font-size: clamp(14px, 4.2vw, 17px); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ib { border: 0; background: #fff; border-radius: 14px; width: 42px; height: 42px; font-size: 21px; cursor: pointer; box-shadow: 0 2px 6px #4b3a8f22; flex: none; }
+  .wallet { display: flex; align-items: center; gap: 5px; background: #fff; border-radius: 20px; padding: 5px 12px 5px 7px; font-weight: 800; font-size: 19px; position: relative; box-shadow: 0 2px 6px #4b3a8f22; flex: none; }
+  .wallet svg { width: 24px; height: 24px; }
+  .float { position: absolute; right: 4px; top: -4px; color: var(--gold); font-weight: 900; font-size: 20px; animation: up 1.1s ease-out forwards; pointer-events: none; }
+  @keyframes up { to { transform: translateY(-38px); opacity: 0; } }
+
+  .bubble {
+    position: relative; background: #fff; border-radius: 18px; padding: 10px 13px; font-size: 17px; font-weight: 650; line-height: 1.3;
+    box-shadow: 0 3px 10px #4b3a8f22; min-height: 48px; cursor: pointer;
+  }
+  .bubble:empty { visibility: hidden; }
+
+  /* меню */
+  .hero { display: flex; align-items: flex-end; gap: 6px; padding: 4px 14px 2px; }
+  .hero .leon { width: 150px; height: 150px; flex: none; }
+  .hero .bubble { margin-bottom: 70px; flex: 1; }
+  .pair { position: relative; flex: none; }
+  .pair .malon { position: absolute; z-index: 1; }
+  .hero .pair { width: 150px; height: 150px; }
+  .hero .pair.wm { width: 178px; }
+  .hero .pair .malon { left: 104px; bottom: -4px; width: 74px; height: 74px; }
+  .hcol { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; padding-bottom: 4px; min-width: 0; }
+  .hcol .bubble { margin-bottom: 0; flex: none; }
+  .feedbtn { border: 0; border-radius: 16px; padding: 10px 8px; font-size: 16px; font-weight: 800; background: #42c860; color: #fff; box-shadow: 0 3px 0 #2c9846; cursor: pointer; }
+  .feedbtn:active { transform: translateY(2px); box-shadow: 0 1px 0 #2c9846; }
+  .hero .bubble::after { content: ""; position: absolute; left: -9px; bottom: 14px; border: 9px solid transparent; border-right-color: #fff; border-left: 0; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 6px 14px; }
+  .card { background: #fff; border: 0; border-radius: 18px; padding: 10px 4px 8px; text-align: center; cursor: pointer; box-shadow: 0 3px 8px #4b3a8f22; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .card:active { transform: scale(.96); }
+  .card .ic { height: 38px; display: flex; align-items: center; justify-content: center; font-size: 30px; }
+  .card .ic svg { width: 34px; height: 34px; }
+  .card .ic .tx { font-weight: 900; font-size: 20px; background: var(--light); border-radius: 8px; padding: 1px 6px; }
+  .card b { font-size: 13px; line-height: 1.15; min-height: 30px; display: flex; align-items: center; }
+  .card i { font-style: normal; font-size: 14px; color: var(--gold); letter-spacing: 1px; }
+  .card .num { position: absolute; }
+  .sect { grid-column: 1 / -1; font-weight: 800; font-size: 13px; opacity: .7; margin: 4px 2px -4px; }
+
+  /* урок */
+  .host { display: flex; align-items: center; gap: 4px; padding: 2px 12px; min-height: 104px; }
+  .host .pair, .host .pair .leon { width: 96px; height: 96px; }
+  .host .pair.wm { width: 112px; }
+  .host .pair .malon { left: 62px; bottom: -4px; width: 50px; height: 50px; }
+  .host .bubble { flex: 1; max-height: 150px; overflow-y: auto; font-size: 16px; }
+  .host .bubble::after { content: ""; position: absolute; left: -9px; top: 50%; margin-top: -9px; border: 9px solid transparent; border-right-color: #fff; border-left: 0; }
+  .bwrap { display: grid; grid-template-columns: 18px var(--bs); grid-template-rows: var(--bs) 20px; justify-content: center; margin-top: 4px; }
+  .ranks { display: flex; flex-direction: column; }
+  .ranks div, .files div { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; opacity: .75; border-radius: 6px; transition: background .3s; }
+  .files { display: flex; grid-column: 2; }
+  .ranks div.glow, .files div.glow { background: #ffe066; opacity: 1; }
+  .board { position: relative; width: var(--bs); height: var(--bs); border-radius: 10px; overflow: hidden; box-shadow: 0 4px 14px #4b3a8f40; touch-action: none; cursor: pointer; }
+  .sqs { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); }
+  .sq { position: relative; }
+  .sq.l { background: var(--light); } .sq.d { background: var(--dark); }
+  .sq.last::before { content: ""; position: absolute; inset: 0; background: #ffe06670; }
+  .sq.sel::before { content: ""; position: absolute; inset: 0; background: #ffd23f; }
+  .sq.mv::after { content: ""; position: absolute; left: 34%; top: 34%; width: 32%; height: 32%; border-radius: 50%; background: #4b3a8f55; }
+  .sq.cap::after { content: ""; position: absolute; inset: 6%; border-radius: 50%; border: 4px solid #4b3a8f66; }
+  .sq.mark::before { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 4px #ff5a5a; background: #ff5a5a30; }
+  .sq.hint::before { content: ""; position: absolute; inset: 0; background: #ffb300aa; animation: blink 1s ease-in-out infinite; }
+  .sq.ok::before { content: ""; position: absolute; inset: 0; background: #42c860aa; animation: fade .8s forwards; }
+  .sq.no::before { content: ""; position: absolute; inset: 0; background: #ff5a5aaa; animation: fade .8s forwards; }
+  .sq .nm { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: calc(var(--bs) / 22); color: #fff; text-shadow: 0 1px 3px #000a; animation: fade 1.4s forwards; z-index: 3; pointer-events: none; }
+  @keyframes blink { 50% { opacity: .35; } }
+  @keyframes fade { 0%, 60% { opacity: 1; } 100% { opacity: 0; } }
+  .pcs { position: absolute; inset: 0; pointer-events: none; }
+  .pc { position: absolute; left: 0; top: 0; width: 12.5%; height: 12.5%; transition: transform .28s ease, opacity .3s; z-index: 2; }
+  .pc svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 2px 1px #0003); }
+  .pc.pop svg { animation: pop .3s ease-out; }
+  .pc.gone { opacity: 0; }
+  @keyframes pop { from { transform: scale(.2); } 70% { transform: scale(1.15); } to { transform: scale(1); } }
+  .fly { position: absolute; left: 0; top: 0; width: 12.5%; height: 12.5%; z-index: 4; transition: transform .3s, opacity .3s; }
+  .fly svg { width: 100%; height: 100%; animation: buzz .25s ease-in-out infinite alternate; }
+  .fly.eaten { opacity: 0; }
+  .fly.eaten svg { animation: none; transform: scale(.1); transition: transform .3s; }
+  @keyframes buzz { from { transform: rotate(-8deg) translateY(-2%); } to { transform: rotate(8deg) translateY(2%); } }
+  .arrows { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
+
+  .act { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; padding: 10px 12px 0; min-height: 70px; }
+  .btn { border: 0; border-radius: 18px; padding: 13px 20px; font-size: 19px; font-weight: 800; cursor: pointer; background: #fff; box-shadow: 0 3px 0 #4b3a8f33; min-width: 64px; }
+  .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #4b3a8f33; }
+  .btn.next { background: #6c5ce7; color: #fff; box-shadow: 0 3px 0 #4434b5; padding: 13px 34px; }
+  .btn.choice { font-size: 22px; min-width: 84px; }
+  .btn.yes { background: #42c860; color: #fff; box-shadow: 0 3px 0 #2c9846; }
+  .btn.no { background: #ff6b6b; color: #fff; box-shadow: 0 3px 0 #d04545; }
+  .btn.right { background: #42c860; color: #fff; }
+  .btn.wrongb { background: #ffd0d0; opacity: .6; }
+  .btn.soft { background: #fff7d6; }
+  .tray { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px; background: #fff; border-radius: 18px; padding: 6px 16px; }
+  .tray svg { width: 46px; height: 46px; }
+
+  /* Леон */
+  .leon svg, .malon svg, .tleon svg, .tmalon svg { width: 100%; height: 100%; overflow: visible; display: block; }
+  svg.idle { animation: breathe 3s ease-in-out infinite; transform-origin: 50% 100%; }
+  svg.hop { animation: hop .45s ease-out 2; transform-origin: 50% 100%; }
+  svg.sad { animation: droop .6s ease-out forwards; transform-origin: 50% 100%; }
+  svg.chew { animation: chew .16s ease-in-out 4; transform-origin: 50% 100%; }
+  @keyframes chew { 50% { transform: scale(1.05, .92); } }
+
+  /* террариум */
+  .tbox { position: relative; margin: 6px 10px 0; height: min(330px, 46vh); border-radius: 22px; border: 6px solid #cfe9ff; background: linear-gradient(#e2f8dc, #c4ecb6 74%, #e8d29a 74%); box-shadow: inset 0 0 0 2px #fff8, 0 4px 12px #0002; overflow: hidden; }
+  .tbox .decor { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .tleon { position: absolute; left: 2%; bottom: calc(31% - 10px); width: min(150px, 44%); aspect-ratio: 1; z-index: 2; }
+  .tmalon { position: absolute; right: 5%; bottom: 9%; width: min(96px, 28%); aspect-ratio: 1; z-index: 2; transition: opacity .3s; }
+  .tmalon.off { opacity: 0; }
+  .tbox .tongue { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: visible; }
+  .tbox .food { position: absolute; left: 0; top: 0; width: 44px; height: 44px; z-index: 4; pointer-events: none; }
+  .tbox .food svg, .fd .ic svg { width: 100%; height: 100%; overflow: visible; display: block; }
+  .tbox .bubble { position: absolute; left: 38%; top: 8px; max-width: 58%; font-size: 15px; padding: 7px 11px; min-height: 0; z-index: 6; }
+  .mtog, .buymalon { position: absolute; right: 8px; border: 0; border-radius: 12px; font-weight: 800; cursor: pointer; z-index: 6; box-shadow: 0 2px 6px #0002; }
+  .mtog { bottom: calc(9% + 100px); padding: 5px 9px; font-size: 13px; background: #fff; }
+  .buymalon { bottom: 12%; right: 4%; padding: 8px 10px; font-size: 15px; background: #ffd166; color: #5a3b0c; display: flex; align-items: center; gap: 4px; }
+  .buymalon svg { width: 18px; height: 18px; }
+  .ripple { position: absolute; width: 24px; height: 8px; border: 2px solid #fff; border-radius: 50%; z-index: 3; pointer-events: none; animation: ripple .9s ease-out forwards; }
+  @keyframes ripple { to { transform: scale(3.2); opacity: 0; } }
+  .heart { position: absolute; font-size: 22px; animation: heart 1.2s ease-out forwards; z-index: 6; pointer-events: none; }
+  @keyframes heart { to { transform: translateY(-60px) scale(1.4); opacity: 0; } }
+  .jar { margin: 8px 12px; background: #fff; border-radius: 20px; padding: 6px 6px 8px; box-shadow: 0 3px 8px #4b3a8f22; }
+  .jt { text-align: center; font-weight: 800; font-size: 14px; margin: 2px 0 6px; }
+  .foods { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .fd { background: #f5f2ff; border: 0; border-radius: 14px; padding: 5px 2px; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+  .fd:active { transform: scale(.95); }
+  .fd.poor { opacity: .5; }
+  .fd .ic { width: 38px; height: 38px; }
+  .fd b { font-size: 11px; line-height: 1.1; min-height: 24px; display: flex; align-items: center; text-align: center; }
+  .fd span { font-size: 12px; font-weight: 800; display: flex; align-items: center; gap: 2px; }
+  .fd span svg { width: 13px; height: 13px; }
+  .wing { animation: flap .14s ease-in-out infinite alternate; transform-origin: 20px 20px; }
+  @keyframes flap { to { transform: scaleX(.3); } }
+  .wing2 { animation: flap2 .09s ease-in-out infinite alternate; transform-origin: 20px 20px; }
+  @keyframes flap2 { to { transform: scaleY(.45); } }
+  .wiggle { animation: wig .3s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 50%; }
+  @keyframes wig { to { transform: scaleX(.85) skewX(10deg); } }
+  .legs { animation: legs .18s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 100% 50%; }
+  .legs2 { transform-origin: 0% 50%; animation-direction: alternate-reverse; }
+  @keyframes legs { to { transform: rotate(14deg); } }
+  .crawl { animation: crawl .35s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 100%; }
+  @keyframes crawl { to { transform: scaleX(.9) translateY(-4%); } }
+  @keyframes breathe { 50% { transform: scale(1.025, .985); } }
+  @keyframes hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-14%) scale(1.04); } }
+  @keyframes droop { to { transform: translateY(3%) rotate(-3deg) scaleY(.96); } }
+
+  /* гардероб */
+  .items { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 6px 14px; }
+  .item { position: relative; background: #fff; border: 0; border-radius: 18px; padding: 6px 4px 8px; cursor: pointer; box-shadow: 0 3px 8px #4b3a8f22; display: flex; flex-direction: column; align-items: center; }
+  .item .pv { width: 74px; height: 74px; }
+  .item b { font-size: 13px; line-height: 1.1; min-height: 29px; display: flex; align-items: center; text-align: center; }
+  .item span { font-weight: 800; font-size: 14px; display: flex; align-items: center; gap: 3px; }
+  .item span svg { width: 16px; height: 16px; }
+  .item.own span { color: #2c9846; }
+  .item.on { outline: 4px solid #ffb300; }
+  .item.poor { opacity: .55; }
+  .vbtn { display: block; margin: 16px auto 0; font-size: 16px; padding: 10px 18px; }
+  .tiny { margin: 22px auto 8px; display: block; border: 0; background: none; color: #4b3a8f88; font-size: 13px; text-decoration: underline; cursor: pointer; }
+
+  /* итог урока */
+  .overlay { position: fixed; inset: 0; background: #2a1f5a99; display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+  .overlay.on { display: flex; }
+  .res { background: linear-gradient(#fff, #f1ecff); border-radius: 26px; padding: 18px 18px 20px; width: 100%; max-width: 360px; text-align: center; }
+  .res h2 { margin: 0 0 4px; font-size: 24px; }
+  .res .pair { width: 150px; height: 150px; margin: 0 auto; }
+  .res .pair.wm { width: 190px; }
+  .res .pair .leon { width: 150px; height: 150px; }
+  .res .pair .malon { left: 112px; bottom: 0; width: 78px; height: 78px; }
+  .res .stars { font-size: 44px; color: var(--gold); letter-spacing: 4px; }
+  .res .stars .off { color: #d7d0f0; }
+  .res .got { font-size: 22px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 6px; margin: 4px 0 14px; }
+  .res .got svg { width: 28px; height: 28px; }
+  .res .row { display: flex; gap: 10px; justify-content: center; }
+  .res .row .btn { flex: 1; padding: 13px 8px; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div id="app">
+  <section id="menu" class="screen on">
+    <header class="top">
+      <div class="wallet"></div>
+      <div class="ttl">Шахматы с Леоном</div>
+      <button class="ib" id="snd" title="Звук">🔊</button>
+      <button class="ib" id="toShop" title="Гардероб">👕</button>
+    </header>
+    <div class="hero">
+      <div class="pair"><div class="leon"></div><div class="malon"></div></div>
+      <div class="hcol"><div class="bubble"></div><button class="feedbtn" id="toTerra">🌿 Покормить</button></div>
+    </div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section id="lesson" class="screen">
+    <header class="top">
+      <button class="ib" id="back" title="Назад">←</button>
+      <div class="ttl" id="lTitle"></div>
+      <div class="wallet"></div>
+    </header>
+    <div class="host"><div class="pair"><div class="leon"></div><div class="malon"></div></div><div class="bubble" id="bubble"></div></div>
+    <div class="bwrap">
+      <div class="ranks" id="ranks"></div>
+      <div class="board" id="board">
+        <div class="sqs" id="sqs"></div>
+        <div class="pcs" id="pcs"></div>
+        <svg class="arrows" id="arrows" viewBox="0 0 8 8"></svg>
+      </div>
+      <div class="files" id="files"></div>
+    </div>
+    <div class="act" id="act"></div>
+  </section>
+
+  <section id="shop" class="screen">
+    <header class="top">
+      <button class="ib" id="shopBack" title="Назад">←</button>
+      <div class="ttl">Гардероб Леона</div>
+      <div class="wallet"></div>
+    </header>
+    <div class="hero"><div class="leon"></div><div class="bubble"></div></div>
+    <div class="items" id="items"></div>
+    <button class="btn soft vbtn" id="voiceBtn">🗣 Голос</button>
+    <button class="tiny" id="reset">Сбросить прогресс</button>
+  </section>
+
+  <section id="terra" class="screen">
+    <header class="top">
+      <button class="ib" id="terraBack" title="Назад">←</button>
+      <div class="ttl">Террариум</div>
+      <div class="wallet"></div>
+    </header>
+    <div class="tbox" id="tbox">
+      <svg class="decor" viewBox="0 0 300 300" preserveAspectRatio="none">
+        <circle cx="268" cy="34" r="18" fill="#fff7c2" opacity=".85"/>
+        <path d="M-4 212 Q90 194 186 210" stroke="#8a5a2b" stroke-width="11" fill="none" stroke-linecap="round"/>
+        <path d="M150 204 Q170 186 182 170" stroke="#8a5a2b" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <ellipse cx="182" cy="166" rx="12" ry="6" fill="#3fa34d" transform="rotate(-40 182 166)"/>
+        <ellipse cx="26" cy="200" rx="14" ry="7" fill="#3fa34d" transform="rotate(-25 26 200)"/>
+        <ellipse cx="246" cy="283" rx="58" ry="22" fill="#a8a29a"/><ellipse cx="236" cy="276" rx="34" ry="9" fill="#c4bdb4"/>
+        <path d="M10 300 Q20 250 14 226 M26 300 Q38 258 48 240 M292 300 Q284 252 294 228" stroke="#4caf50" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <circle cx="120" cy="290" r="5" fill="#d9c27e"/><circle cx="168" cy="294" r="4" fill="#d9c27e"/><circle cx="60" cy="292" r="3" fill="#d9c27e"/>
+        <ellipse cx="141" cy="266" rx="52" ry="14" fill="#9ad8f5"/>
+        <ellipse cx="141" cy="267" rx="47" ry="11" fill="#5fb8ea"/>
+        <ellipse cx="128" cy="263" rx="16" ry="3" fill="#fff" opacity=".45"/>
+        <circle cx="88" cy="270" r="4" fill="#b9b2a8"/><circle cx="194" cy="262" r="3.5" fill="#b9b2a8"/><circle cx="182" cy="275" r="3" fill="#a8a29a"/>
+      </svg>
+      <div class="tleon"></div><div class="tmalon"></div><svg class="tongue"></svg>
+      <div class="bubble"></div>
+      <button class="mtog" id="mtog">🦎 Малон: дома</button>
+      <button class="buymalon" id="buyMalon"></button>
+    </div>
+    <div class="jar"><div class="jt">🫙 Банка с едой — нажми, и букашка выбежит</div><div class="foods" id="foods"></div></div>
+  </section>
+
+  <div class="overlay" id="result">
+    <div class="res">
+      <h2>Урок пройден!</h2>
+      <div class="pair"><div class="leon"></div><div class="malon"></div></div>
+      <div class="stars" id="rStars"></div>
+      <div class="got" id="rGot"></div>
+      <div class="row"><button class="btn" id="rAgain">↺ Ещё раз</button><button class="btn next" id="rMenu">Дальше ▶</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ENGINE START
+// Доска: массив из 64 клеток, индекс = ряд * 8 + вертикаль (a1 = 0, h8 = 63).
+// Фигура: { t: 'P'|'N'|'B'|'R'|'Q'|'K', c: 'w'|'b', id }. Взятия на проходе нет — для малышей не нужно.
+const FILES = 'abcdefgh';
+const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -';
+const sqName = s => FILES[s & 7] + ((s >> 3) + 1);
+const sqIdx = n => FILES.indexOf(n[0]) + (n[1] - 1) * 8;
+const opp = c => (c === 'w' ? 'b' : 'w');
+let PID = 1;
+
+function parseFEN(fen) {
+  const [pl, turn = 'w', cast = '-'] = fen.split(' ');
+  const b = Array(64).fill(null);
+  pl.split('/').forEach((row, i) => {
+    let f = 0;
+    const r = 7 - i;
+    for (const ch of row) {
+      if (/\d/.test(ch)) f += +ch;
+      else { b[r * 8 + f] = { t: ch.toUpperCase(), c: ch === ch.toUpperCase() ? 'w' : 'b', id: PID++ }; f++; }
+    }
+  });
+  return { b, turn, cast: { K: cast.includes('K'), Q: cast.includes('Q'), k: cast.includes('k'), q: cast.includes('q') } };
+}
+
+const KN = [[1, 2], [2, 1], [-1, 2], [-2, 1], [1, -2], [2, -1], [-1, -2], [-2, -1]];
+const KG = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+const RD = [[1, 0], [-1, 0], [0, 1], [0, -1]], BD = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+const on = (f, r) => f >= 0 && f < 8 && r >= 0 && r < 8;
+
+// бьёт ли сторона by клетку sq
+function attacked(st, sq, by) {
+  const b = st.b, f = sq & 7, r = sq >> 3;
+  const pr = by === 'w' ? r - 1 : r + 1;
+  for (const df of [-1, 1]) {
+    if (on(f + df, pr)) { const p = b[pr * 8 + f + df]; if (p && p.c === by && p.t === 'P') return true; }
+  }
+  for (const [df, dr] of KN) {
+    if (on(f + df, r + dr)) { const p = b[(r + dr) * 8 + f + df]; if (p && p.c === by && p.t === 'N') return true; }
+  }
+  for (const [df, dr] of KG) {
+    if (on(f + df, r + dr)) { const p = b[(r + dr) * 8 + f + df]; if (p && p.c === by && p.t === 'K') return true; }
+  }
+  for (const [dirs, t] of [[RD, 'R'], [BD, 'B']]) {
+    for (const [df, dr] of dirs) {
+      let ff = f + df, rr = r + dr;
+      while (on(ff, rr)) {
+        const p = b[rr * 8 + ff];
+        if (p) { if (p.c === by && (p.t === t || p.t === 'Q')) return true; break; }
+        ff += df; rr += dr;
+      }
+    }
+  }
+  return false;
+}
+
+function pseudo(st) {
+  const ms = [], b = st.b, c = st.turn;
+  for (let s = 0; s < 64; s++) {
+    const p = b[s];
+    if (!p || p.c !== c) continue;
+    const f = s & 7, r = s >> 3;
+    if (p.t === 'P') {
+      const d = c === 'w' ? 1 : -1, last = c === 'w' ? 7 : 0, r1 = r + d;
+      if (!on(f, r1)) continue;
+      if (!b[r1 * 8 + f]) {
+        ms.push({ from: s, to: r1 * 8 + f, promo: r1 === last ? 'Q' : null });
+        if (r === (c === 'w' ? 1 : 6) && !b[(r1 + d) * 8 + f]) ms.push({ from: s, to: (r1 + d) * 8 + f });
+      }
+      for (const df of [-1, 1]) {
+        if (!on(f + df, r1)) continue;
+        const q = b[r1 * 8 + f + df];
+        if (q && q.c !== c) ms.push({ from: s, to: r1 * 8 + f + df, promo: r1 === last ? 'Q' : null });
+      }
+    } else if (p.t === 'N' || p.t === 'K') {
+      for (const [df, dr] of (p.t === 'N' ? KN : KG)) {
+        if (!on(f + df, r + dr)) continue;
+        const q = b[(r + dr) * 8 + f + df];
+        if (!q || q.c !== c) ms.push({ from: s, to: (r + dr) * 8 + f + df });
+      }
+      if (p.t === 'K' && s === (c === 'w' ? 4 : 60)) {
+        const o = opp(c), base = c === 'w' ? 0 : 56;
+        const rook = q => q && q.t === 'R' && q.c === c;
+        if (st.cast[c === 'w' ? 'K' : 'k'] && rook(b[base + 7]) && !b[base + 5] && !b[base + 6] &&
+            !attacked(st, base + 4, o) && !attacked(st, base + 5, o) && !attacked(st, base + 6, o))
+          ms.push({ from: s, to: base + 6, castle: 'K' });
+        if (st.cast[c === 'w' ? 'Q' : 'q'] && rook(b[base]) && !b[base + 1] && !b[base + 2] && !b[base + 3] &&
+            !attacked(st, base + 4, o) && !attacked(st, base + 3, o) && !attacked(st, base + 2, o))
+          ms.push({ from: s, to: base + 2, castle: 'Q' });
+      }
+    } else {
+      const dirs = p.t === 'R' ? RD : p.t === 'B' ? BD : RD.concat(BD);
+      for (const [df, dr] of dirs) {
+        let ff = f + df, rr = r + dr;
+        while (on(ff, rr)) {
+          const q = b[rr * 8 + ff];
+          if (q && q.c === c) break;
+          ms.push({ from: s, to: rr * 8 + ff });
+          if (q) break;
+          ff += df; rr += dr;
+        }
+      }
+    }
+  }
+  return ms;
+}
+
+function makeMove(st, m) {
+  const b = st.b.slice(), p = b[m.from], c = p.c, cast = { ...st.cast };
+  b[m.to] = m.promo ? { t: m.promo, c, id: PID++ } : p;
+  b[m.from] = null;
+  if (m.castle) {
+    const base = c === 'w' ? 0 : 56;
+    if (m.castle === 'K') { b[base + 5] = b[base + 7]; b[base + 7] = null; }
+    else { b[base + 3] = b[base]; b[base] = null; }
+  }
+  if (p.t === 'K') { if (c === 'w') cast.K = cast.Q = false; else cast.k = cast.q = false; }
+  for (const s of [m.from, m.to]) {
+    if (s === 0) cast.Q = false; if (s === 7) cast.K = false;
+    if (s === 56) cast.q = false; if (s === 63) cast.k = false;
+  }
+  return { b, turn: opp(c), cast };
+}
+
+function kingSq(st, c) {
+  for (let s = 0; s < 64; s++) { const p = st.b[s]; if (p && p.t === 'K' && p.c === c) return s; }
+  return -1;
+}
+function legal(st) {
+  const c = st.turn;
+  return pseudo(st).filter(m => {
+    const n = makeMove(st, m), k = kingSq(n, c);
+    return k < 0 || !attacked(n, k, opp(c));
+  });
+}
+function inCheck(st) { const k = kingSq(st, st.turn); return k >= 0 && attacked(st, k, opp(st.turn)); }
+function status(st) { return legal(st).length ? (inCheck(st) ? 'check' : 'play') : (inCheck(st) ? 'mate' : 'stalemate'); }
+const mstr = m => sqName(m.from) + sqName(m.to);
+function findMove(st, s) { return legal(st).find(m => mstr(m) === s); }
+function mateIn1Moves(st) {
+  return legal(st).filter(m => { const n = makeMove(st, m); return !legal(n).length && inCheck(n); });
+}
+// ход m ставит мат сразу или после любого ответа есть мат в 1 ход
+function forcesMateIn2(st, m) {
+  const n = makeMove(st, m), replies = legal(n);
+  if (!replies.length) return inCheck(n);
+  return replies.every(r => mateIn1Moves(makeMove(n, r)).length > 0);
+}
+function material(st, c) { let n = 0; for (const p of st.b) if (p && p.c === c && p.t !== 'K') n++; return n; }
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+// --- эндшпиль: белые с фигурами против одинокого чёрного короля ---
+const cdist = s => Math.max(3 - (s & 7), (s & 7) - 4) + Math.max(3 - (s >> 3), (s >> 3) - 4);
+const kdist = (a, b) => Math.max(Math.abs((a & 7) - (b & 7)), Math.abs((a >> 3) - (b >> 3)));
+function evalEnd(st) {
+  if (!material(st, 'w')) return -5000;
+  const bk = kingSq(st, 'b'), wk = kingSq(st, 'w'), f = bk & 7, r = bk >> 3;
+  let sc = cdist(bk) * 20 + (7 - kdist(wk, bk)) * 6;
+  const b2 = st.b.slice(); b2[bk] = null;
+  const st2 = { b: b2 };
+  let mob = 0;
+  for (const [df, dr] of KG) {
+    if (!on(f + df, r + dr)) continue;
+    const s = (r + dr) * 8 + f + df;
+    if (b2[s] && b2[s].c === 'b') continue;
+    if (!attacked(st2, s, 'w')) mob++;
+  }
+  sc -= mob * 10;
+  const pcs = [];
+  st.b.forEach((p, s) => { if (p && p.c === 'w' && p.t !== 'K') pcs.push([p.t, s]); });
+  if (pcs.length === 1 && pcs[0][0] === 'R') {
+    // «коробка»: сколько клеток оставляет королю ладья
+    const rf = pcs[0][1] & 7, rr = pcs[0][1] >> 3;
+    const w = f < rf ? rf : f > rf ? 7 - rf : 8, h = r < rr ? rr : r > rr ? 7 - rr : 8;
+    sc -= w * h * 3;
+  }
+  return sc;
+}
+function negamax(st, depth, alpha, beta, ply) {
+  const moves = legal(st), sgn = st.turn === 'w' ? 1 : -1;
+  if (!moves.length) return inCheck(st) ? -(10000 - ply) : sgn * -5000;
+  if (!material(st, 'w')) return sgn * -5000;
+  if (!depth) return sgn * evalEnd(st);
+  let best = -Infinity;
+  for (const m of moves) {
+    const v = -negamax(makeMove(st, m), depth - 1, -beta, -alpha, ply + 1);
+    if (v > best) best = v;
+    if (v > alpha) alpha = v;
+    if (alpha >= beta) break;
+  }
+  return best;
+}
+function bestMove(st, depth, noise = 0) {
+  let best = null, bv = -Infinity;
+  for (const m of shuffle(legal(st))) {
+    const v = -negamax(makeMove(st, m), depth - 1, -Infinity, Infinity, 1) + Math.random() * noise;
+    if (v > bv) { bv = v; best = m; }
+  }
+  return best;
+}
+
+// --- пешечный бой: кто первым дойдёт до края или съест все пешки ---
+function pawnWinner(st) {
+  for (let f = 0; f < 8; f++) {
+    if (st.b[56 + f] && st.b[56 + f].c === 'w') return 'w';
+    if (st.b[f] && st.b[f].c === 'b') return 'b';
+  }
+  const w = material(st, 'w'), bl = material(st, 'b');
+  if (!bl) return 'w';
+  if (!w) return 'b';
+  if (!legal(st).length) return w > bl ? 'w' : w < bl ? 'b' : 'draw';
+  return null;
+}
+function passed(st, s, c) {
+  const f = s & 7, r = s >> 3, d = c === 'w' ? 1 : -1;
+  for (let rr = r + d; rr >= 0 && rr < 8; rr += d)
+    for (let ff = f - 1; ff <= f + 1; ff++) {
+      if (!on(ff, rr)) continue;
+      const p = st.b[rr * 8 + ff];
+      if (p && p.c !== c) return false;
+    }
+  return true;
+}
+function pawnEval(st) {
+  let s = 0;
+  st.b.forEach((p, i) => {
+    if (!p) return;
+    const r = i >> 3;
+    if (p.c === 'w') s += 10 + (r - 1) * (r - 1) * 0.5 + (passed(st, i, 'w') ? r * 3 : 0);
+    else s -= 10 + (6 - r) * (6 - r) * 0.5 + (passed(st, i, 'b') ? (7 - r) * 3 : 0);
+  });
+  return s;
+}
+function pawnNegamax(st, depth, alpha, beta) {
+  const sgn = st.turn === 'w' ? 1 : -1, w = pawnWinner(st);
+  if (w) return w === 'draw' ? 0 : (w === st.turn ? 1000 + depth : -1000 - depth);
+  if (!depth) return sgn * pawnEval(st);
+  let best = -Infinity;
+  for (const m of legal(st)) {
+    const v = -pawnNegamax(makeMove(st, m), depth - 1, -beta, -alpha);
+    if (v > best) best = v;
+    if (v > alpha) alpha = v;
+    if (alpha >= beta) break;
+  }
+  return best;
+}
+function pawnAI(st, depth = 2, noise = 6) {
+  let best = null, bv = -Infinity;
+  for (const m of shuffle(legal(st))) {
+    const v = -pawnNegamax(makeMove(st, m), depth - 1, -Infinity, Infinity) + Math.random() * noise;
+    if (v > bv) { bv = v; best = m; }
+  }
+  return best;
+}
+// ENGINE END
+
+// ===================== Рисунки =====================
+function pieceSVG(t, c) {
+  const F = c === 'w' ? '#ffffff' : '#463c6e', S = c === 'w' ? '#2d2550' : '#140f2b', D = c === 'w' ? '#2d2550' : '#efeaff';
+  const a = `fill="${F}" stroke="${S}" stroke-width="2" stroke-linejoin="round"`;
+  const base = `<rect x="10" y="32" width="25" height="7" rx="3" ${a}/>`;
+  const g = {
+    P: `<circle cx="22.5" cy="13" r="6.5" ${a}/><path d="M15.5 32 C15.5 25 18.5 21 22.5 21 C26.5 21 29.5 25 29.5 32Z" ${a}/>${base}`,
+    R: `<path d="M12 8 h5 v4 h3.5 v-4 h4 v4 h3.5 v-4 h5 v9 h-21 z" ${a}/><path d="M15 17 h15 l1.5 15 h-18 z" ${a}/>${base}`,
+    B: `<circle cx="22.5" cy="7" r="3" ${a}/><path d="M22.5 10 C30.5 15 31.5 22 27.5 27.5 L17.5 27.5 C13.5 22 14.5 15 22.5 10Z" ${a}/><path d="M25.5 15 L21 20.5" stroke="${D}" stroke-width="2.2" stroke-linecap="round"/><path d="M16 27.5 h13 l1.5 4.5 h-16z" ${a}/>${base}`,
+    N: `<path d="M14 39 L14 31 C14 26 18 23 21 20 C17 21.5 13 23.5 10.5 21.5 C8.5 19.5 10.5 15 15 12 L17.5 6.5 L21 10 C28.5 9.5 33.5 15.5 33.5 24 L33.5 39Z" ${a}/><circle cx="18.5" cy="14.5" r="1.8" fill="${D}"/><path d="M27 12 C30 15 31 19 31 23" stroke="${D}" stroke-width="1.5" fill="none" opacity=".6"/>${base}`,
+    Q: `<path d="M9 15 L14 31 H31 L36 15 L28.5 23 L22.5 11 L16.5 23 Z" ${a}/><circle cx="9" cy="13" r="2.8" ${a}/><circle cx="22.5" cy="9" r="2.8" ${a}/><circle cx="36" cy="13" r="2.8" ${a}/>${base}`,
+    K: `<path d="M22.5 3.5 v9 M18.5 7.5 h8" stroke="${S}" stroke-width="3.2" stroke-linecap="round"/><path d="M22.5 3.5 v9 M18.5 7.5 h8" stroke="${F}" stroke-width="1.2" stroke-linecap="round"/><path d="M12 20 C12 13 22.5 13 22.5 19 C22.5 13 33 13 33 20 C33 25 29 28 29 32 H16 C16 28 12 25 12 20Z" ${a}/>${base}`,
+  }[t];
+  return `<svg viewBox="0 0 45 45" xmlns="http://www.w3.org/2000/svg">${g}</svg>`;
+}
+const COIN = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.5" fill="#ffc93c" stroke="#d99a00" stroke-width="2"/><circle cx="12" cy="12" r="7" fill="none" stroke="#ffe08a" stroke-width="1.5"/><path d="M12 7.2 L13.4 10.4 L16.8 10.6 L14.2 12.8 L15 16.2 L12 14.4 L9 16.2 L9.8 12.8 L7.2 10.6 L10.6 10.4Z" fill="#e3a000"/></svg>`;
+const FLY = `<svg viewBox="0 0 40 40"><ellipse cx="13" cy="15" rx="8" ry="5" fill="#e3f6ff" stroke="#7ab" stroke-width="1.2" transform="rotate(-30 13 15)"/><ellipse cx="27" cy="15" rx="8" ry="5" fill="#e3f6ff" stroke="#7ab" stroke-width="1.2" transform="rotate(30 27 15)"/><ellipse cx="20" cy="24" rx="7.5" ry="9.5" fill="#33303f"/><circle cx="16.3" cy="18" r="3.2" fill="#d33"/><circle cx="23.7" cy="18" r="3.2" fill="#d33"/><path d="M14 26 h12 M14.5 30 h11" stroke="#666" stroke-width="1.2"/></svg>`;
+
+// --- Леон-чиби ---
+const SKINS = {
+  green:   { n: ['#6ccc5c', '#358f42', '#dcf7a4'], h: ['#7bd96a', '#3c9c4a', '#e6ffb0'] },
+  blue:    { n: ['#5ab4ee', '#2b74ad', '#d6f0ff'], h: ['#6fc3ff', '#2f80c0', '#e3f5ff'] },
+  pink:    { n: ['#f394c8', '#b94f88', '#ffe2f2'], h: ['#ffa3d6', '#c45a94', '#ffeaf6'] },
+  rainbow: { n: ['#7bd96a', '#7a4fb5', '#fff3c4'], h: ['#7bd96a', '#7a4fb5', '#fff7d6'] },
+};
+const SAD = ['#a2a9d6', '#6c73a8', '#dfe2f5'];
+const ol = 'stroke="#2b2b2b" stroke-width="2" stroke-linejoin="round"';
+const WEAR = {
+  cap:     () => `<g transform="translate(100 48) scale(1.2)"><path d="M-24 2 Q-24 -24 0 -24 Q24 -24 24 2Z" fill="#e53935" ${ol}/><path d="M16 0 Q34 -2 42 6 L18 6Z" fill="#b71c1c" ${ol}/><circle cy="-24" r="4" fill="#fff"/></g>`,
+  bow:     () => `<g transform="translate(128 46) rotate(15)"><path d="M0 0 L-20 -13 L-20 13Z M0 0 L20 -13 L20 13Z" fill="#ff6fb5" ${ol}/><circle r="6" fill="#ff3d9a" ${ol}/></g>`,
+  tophat:  () => `<g transform="translate(100 44) scale(1.2)"><rect x="-16" y="-34" width="32" height="34" rx="3" fill="#2f2f3a" ${ol}/><rect x="-16" y="-12" width="32" height="6" fill="#e53935"/><rect x="-27" y="-3" width="54" height="7" rx="3.5" fill="#2f2f3a" ${ol}/></g>`,
+  wizard:  () => `<g transform="translate(100 46) scale(1.2)"><path d="M-22 0 L4 -52 L22 0Z" fill="#5e35b1" ${ol}/><path d="M-6 -22 l2 5 5 .5 -4 3 1.5 5 -4.5 -3 -4.5 3 1.5 -5 -4 -3 5 -.5z" fill="#ffd54f"/><circle cx="8" cy="-36" r="2.5" fill="#ffd54f"/><ellipse cx="0" cy="1" rx="30" ry="6" fill="#4527a0" ${ol}/></g>`,
+  crown:   () => `<g transform="translate(100 46) scale(1.2)"><path d="M-22 4 L-22 -18 L-11 -6 L0 -24 L11 -6 L22 -18 L22 4Z" fill="#ffc107" stroke="#a87700" stroke-width="2.5" stroke-linejoin="round"/><circle cx="0" cy="-6" r="3.5" fill="#e53935"/><circle cx="-13" cy="-1" r="2.5" fill="#29b6f6"/><circle cx="13" cy="-1" r="2.5" fill="#29b6f6"/></g>`,
+  glasses: () => `<circle cx="56" cy="90" r="18" fill="#7fd3ff44" stroke="#222" stroke-width="3.5"/><circle cx="144" cy="90" r="18" fill="#7fd3ff44" stroke="#222" stroke-width="3.5"/><path d="M74 90 Q100 80 126 90" stroke="#222" stroke-width="3.5" fill="none"/>`,
+  shades:  () => `<path d="M36 80 h40 q0 26 -20 26 q-20 0 -20 -26z M124 80 h40 q0 26 -20 26 q-20 0 -20 -26z" fill="#1d1d26" stroke="#111" stroke-width="3"/><path d="M76 84 Q100 76 124 84" stroke="#111" stroke-width="4" fill="none"/><path d="M44 85 l10 0 M132 85 l10 0" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".7"/>`,
+  bowtie:  () => `<g transform="translate(100 136)"><path d="M0 0 L-20 -11 L-20 11Z M0 0 L20 -11 L20 11Z" fill="#e53935" ${ol}/><circle r="5.5" fill="#b71c1c" ${ol}/></g>`,
+  scarf:   () => `<g transform="translate(100 136) scale(1.1)"><path d="M-26 -6 Q0 8 26 -6 L26 6 Q0 20 -26 6Z" fill="#7e57c2" ${ol}/><path d="M-12 8 L-18 34 L-6 34 L-2 12Z" fill="#7e57c2" ${ol}/><path d="M-22 -2 L22 -2 M-20 6 L20 6" stroke="#ffca28" stroke-width="3"/></g>`,
+  medal:   () => `<path d="M84 130 L100 160 L116 130" fill="none" stroke="#e53935" stroke-width="7"/><circle cx="100" cy="164" r="12" fill="#ffc107" stroke="#a87700" stroke-width="2.5"/><path d="M100 157 l2.2 4.6 5 .5 -3.8 3.3 1.2 5 -4.6 -2.7 -4.6 2.7 1.2 -5 -3.8 -3.3 5 -.5z" fill="#a87700"/>`,
+  cape:    () => `<path d="M66 128 Q34 176 46 198 L154 198 Q166 176 134 128 Z" fill="#e53935" ${ol}/><path d="M66 128 Q100 140 134 128" fill="none" stroke="#b71c1c" stroke-width="4"/>`,
+};
+let LID = 0;
+function leonSVG(mood, wear) {
+  const id = 'lg' + (++LID), skin = wear.skin || 'green';
+  const [body, dark, belly] = mood === 'sad' ? SAD : SKINS[skin][mood === 'happy' ? 'h' : 'n'];
+  const rb = skin === 'rainbow' && mood !== 'sad';
+  const B = rb ? `url(#${id}r)` : body;
+  const sad = mood === 'sad', happy = mood === 'happy';
+  const mouth = sad ? 'M78 130 Q100 116 122 130' : happy ? 'M68 116 Q100 148 132 116 Q100 132 68 116Z' : 'M74 120 Q100 134 126 120';
+  const px = sad ? 0 : 4, py = sad ? 5 : 0, pr = happy ? 7.5 : 6.5;
+  let s = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><defs>
+    <radialGradient id="${id}g" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    ${rb ? `<linearGradient id="${id}r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6b6b"/><stop offset=".25" stop-color="#ffd93d"/><stop offset=".5" stop-color="#6bcb77"/><stop offset=".75" stop-color="#4d96ff"/><stop offset="1" stop-color="#b06bff"/></linearGradient>` : ''}
+    </defs>`;
+  if (wear.back) s += WEAR[wear.back]();
+  s += `<path d="M136 168 C176 172 186 140 166 130 C150 122 140 140 152 146" stroke="${B}" stroke-width="13" fill="none" stroke-linecap="round"/>
+    <ellipse cx="100" cy="160" rx="40" ry="30" fill="${B}"/>
+    <ellipse cx="100" cy="166" rx="24" ry="18" fill="${belly}"/>
+    <ellipse cx="78" cy="188" rx="13" ry="7" fill="${dark}"/><ellipse cx="122" cy="188" rx="13" ry="7" fill="${dark}"/>
+    <path d="M62 62 Q100 4 138 62Z" fill="${dark}"/>
+    <ellipse cx="100" cy="92" rx="64" ry="52" fill="${B}"/>
+    <ellipse cx="100" cy="92" rx="64" ry="52" fill="url(#${id}g)"/>
+    <circle cx="100" cy="58" r="5" fill="${dark}" opacity=".35"/><circle cx="84" cy="66" r="4" fill="${dark}" opacity=".35"/><circle cx="116" cy="66" r="4" fill="${dark}" opacity=".35"/>
+    <circle cx="54" cy="90" r="24" fill="${B}" stroke="${dark}" stroke-width="3"/>
+    <circle cx="146" cy="90" r="24" fill="${B}" stroke="${dark}" stroke-width="3"/>
+    <circle cx="56" cy="90" r="14" fill="#fff"/><circle cx="144" cy="90" r="14" fill="#fff"/>
+    <circle cx="${56 + px}" cy="${90 + py}" r="${pr}" fill="#222"/><circle cx="${144 - px}" cy="${90 + py}" r="${pr}" fill="#222"/>
+    <circle cx="${58 + px}" cy="${87 + py}" r="2.2" fill="#fff"/><circle cx="${146 - px}" cy="${87 + py}" r="2.2" fill="#fff"/>
+    ${sad ? `<path d="M38 74 Q54 66 70 76 M130 76 Q146 66 162 74" stroke="${dark}" stroke-width="4" fill="none" stroke-linecap="round"/>` : ''}
+    <path d="${mouth}" stroke="${dark}" stroke-width="4" fill="${happy ? '#d84a5f' : 'none'}" stroke-linecap="round" stroke-linejoin="round"/>
+    ${sad ? `<path d="M40 112 Q36 122 40 127 Q45 122 40 112Z" fill="#6ec6ff"/>` : `<circle cx="70" cy="116" r="7" fill="#ff8fa3" opacity=".6"/><circle cx="130" cy="116" r="7" fill="#ff8fa3" opacity=".6"/>`}`;
+  s += leonArms(mood, B, dark);
+  for (const slot of ['neck', 'eyes', 'head']) if (wear[slot]) s += WEAR[wear[slot]]();
+  if (happy) s += [[18, 30], [182, 26], [188, 120]].map(([x, y]) => `<path d="M${x} ${y - 9} L${x + 3} ${y - 3} L${x + 9} ${y} L${x + 3} ${y + 3} L${x} ${y + 9} L${x - 3} ${y + 3} L${x - 9} ${y} L${x - 3} ${y - 3}Z" fill="#ffd54f"/>`).join('');
+  return s + '</svg>';
+}
+
+// --- передние лапки: обычно по бокам, от радости — вверх, от грусти — прижаты к себе ---
+const pawPose = mood => mood === 'happy' ? 'up' : mood === 'sad' ? 'hug' : 'side';
+const mitten = (x, y, a, col) => `<g transform="translate(${x} ${y}) rotate(${a})"><ellipse cx="-3.8" cy="0" rx="5.4" ry="4.6" fill="${col}"/><ellipse cx="3.8" cy="0" rx="5.4" ry="4.6" fill="${col}"/></g>`;
+function leonArms(mood, B, dark) {
+  const arm = (x1, y1, x2, y2, a) => `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${B}" stroke-width="12" stroke-linecap="round"/>` + mitten(x2, y2 + 2, a, dark);
+  const p = pawPose(mood);
+  if (p === 'up') return arm(70, 150, 40, 118, 145) + arm(130, 150, 160, 118, -145);
+  if (p === 'hug') return arm(68, 152, 90, 170, -25) + arm(132, 152, 110, 170, 25);
+  return arm(66, 152, 52, 174, 15) + arm(134, 152, 148, 174, -15);
+}
+const toes = (x, y, a, c) => `<g transform="translate(${x} ${y}) rotate(${a})">` + [-5.5, 0, 5.5].map(t => `<circle cx="${t}" cy="${t ? 2.5 : 4}" r="3.3" fill="${c.body}" stroke="${c.dark}" stroke-width="1.2"/>`).join('') + '</g>';
+function malonArms(mood, c) {
+  const arm = (x1, y1, x2, y2, a) => `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${c.body}" stroke-width="9" stroke-linecap="round"/>` + toes(x2, y2 + 1, a, c);
+  const p = pawPose(mood);
+  if (p === 'up') return arm(54, 112, 18, 82, 150) + arm(106, 112, 142, 82, -150);
+  if (p === 'hug') return arm(56, 116, 72, 134, -20) + arm(104, 116, 88, 134, 20);
+  return arm(54, 114, 42, 140, 10) + arm(106, 114, 118, 140, -10);
+}
+
+// --- Малон, леопардовый геккон ---
+const MAL = { body: '#ffd166', dark: '#8a5a19', belly: '#fff4d6', spot: '#7a4e22', eye: '#f2b33d' };
+const MAL_SAD = { body: '#d9cfa8', dark: '#7d6f4c', belly: '#f3efe0', spot: '#8c7b5c', eye: '#c9b98a' };
+function geckoSVG(mood) {
+  const c = mood === 'sad' ? MAL_SAD : MAL, happy = mood === 'happy', sad = mood === 'sad';
+  const foot = x => `<g transform="translate(${x} 150)"><ellipse rx="9" ry="6" fill="${c.body}"/>${[-7, 0, 7].map(t => `<circle cx="${t}" cy="${t ? 4.5 : 6.5}" r="3.4" fill="${c.body}" stroke="${c.dark}" stroke-width="1.2"/>`).join('')}</g>`;
+  const eye = x => happy
+    ? `<circle cx="${x}" cy="62" r="17" fill="${c.body}" stroke="${c.dark}" stroke-width="2.5"/><path d="M${x - 9} 65 Q${x} 54 ${x + 9} 65" stroke="#222" stroke-width="4" fill="none" stroke-linecap="round"/>`
+    : `<circle cx="${x}" cy="62" r="17" fill="${c.body}" stroke="${c.dark}" stroke-width="2.5"/><circle cx="${x}" cy="${sad ? 65 : 62}" r="13" fill="${c.eye}"/><ellipse cx="${x}" cy="${sad ? 66 : 62}" rx="3.5" ry="10" fill="#222"/><circle cx="${x + 4}" cy="57" r="2.4" fill="#fff"/>`;
+  const spots = [[52, 96], [64, 46], [96, 44], [110, 96], [70, 120], [92, 128], [60, 132], [100, 114], [132, 128], [146, 110]];
+  let s = `<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+    <path d="M104 132 C140 142 158 118 144 102 C134 94 122 104 130 112" stroke="${c.body}" stroke-width="16" fill="none" stroke-linecap="round"/>
+    ${foot(60)}${foot(100)}
+    <ellipse cx="80" cy="124" rx="32" ry="24" fill="${c.body}"/><ellipse cx="80" cy="131" rx="19" ry="13" fill="${c.belly}"/>
+    <ellipse cx="80" cy="78" rx="56" ry="40" fill="${c.body}"/>`;
+  s += spots.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3.6" fill="${c.spot}" opacity=".85"/>`).join('');
+  s += eye(50) + eye(110);
+  if (sad) s += `<path d="M34 46 Q50 40 64 48 M96 48 Q110 40 126 46" stroke="${c.dark}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+  s += `<circle cx="73" cy="80" r="1.9" fill="${c.dark}"/><circle cx="87" cy="80" r="1.9" fill="${c.dark}"/>`;
+  s += happy ? `<path d="M44 90 Q80 124 116 90 Q80 104 44 90Z" fill="#e8566f" stroke="${c.dark}" stroke-width="3" stroke-linejoin="round"/>`
+     : sad ? `<path d="M56 102 Q80 88 104 102" stroke="${c.dark}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`
+           : `<path d="M44 90 Q80 110 116 90" stroke="${c.dark}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+  if (!sad) s += `<circle cx="38" cy="92" r="6" fill="#ff8fa3" opacity=".55"/><circle cx="122" cy="92" r="6" fill="#ff8fa3" opacity=".55"/>`;
+  s += malonArms(mood, c);
+  return s + '</svg>';
+}
+
+// ===================== Состояние и звук =====================
+const $ = s => document.querySelector(s);
+const pick = a => a[Math.random() * a.length | 0];
+const KEY = 'leonChess1';
+const S = (() => {
+  const d = { coins: 10, owned: [], wear: { skin: 'green' }, stars: {}, sound: true, malon: { owned: false, on: true } };
+  try { const j = JSON.parse(localStorage.getItem(KEY)); if (j) return Object.assign(d, j); } catch (e) {}
+  return d;
+})();
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+let AC = null;
+function sfx(kind) {
+  if (!S.sound) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const notes = {
+      tap: [[520, .05, 'sine', .08]], move: [[200, .07, 'triangle', .18]], capture: [[260, .06, 'square', .08], [180, .1, 'triangle', .15]],
+      right: [[660, .09, 'sine', .15], [880, .09, 'sine', .15], [1320, .16, 'sine', .12]],
+      wrong: [[330, .15, 'triangle', .15], [247, .25, 'triangle', .15]],
+      coin: [[1200, .06, 'square', .05], [1600, .12, 'square', .05]],
+      chomp: [[300, .05, 'square', .1], [500, .08, 'sine', .12]],
+      win: [[523, .12, 'sine', .15], [659, .12, 'sine', .15], [784, .12, 'sine', .15], [1047, .3, 'sine', .15]],
+    }[kind];
+    let t = AC.currentTime;
+    for (const [f, d, type, v] of notes) {
+      const o = AC.createOscillator(), g = AC.createGain();
+      o.type = type; o.frequency.value = f; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+      o.connect(g).connect(AC.destination); o.start(t); o.stop(t + d + .02); t += d * .9;
+    }
+  } catch (e) {}
+}
+
+// --- голос ---
+const LETTERS = { a: 'а', b: 'бэ', c: 'цэ', d: 'дэ', e: 'е', f: 'эф', g: 'жэ', h: 'аш' };
+const speakable = t => t.replace(/\b([a-h])([1-8])\b/g, (_, l, d) => LETTERS[l] + ' ' + d)
+  .replace(/[\u{1F000}-\u{1FFFF}☀-➿️▶←↺✔✘«»]/gu, '');
+// голос Леона: настоящий мужской, если он есть (Дмитрий в Edge, Павел в Windows, Юрий на iPhone);
+// у женских голосов есть вариант «пониже» — он и выбран, пока мужского нет (обычно так на Android)
+const MALE = /pavel|павел|dmitr|дмитр|yuri|юрий|maxim|максим|male|мужск/i;
+const RU_NAMES = { Pavel: 'Павел', Irina: 'Ирина', Dmitry: 'Дмитрий', Svetlana: 'Светлана', Yuri: 'Юрий', Milena: 'Милена', Katya: 'Катя' };
+let VARS = [], VAR = null;  // варианты голоса: { v: голос браузера или null, pitch, label }
+function voiceName(v, i) {
+  const known = v.name.match(/Pavel|Irina|Dmitry|Svetlana|Yuri|Milena|Katya/);
+  return known ? RU_NAMES[known[0]] : 'голос ' + (i + 1);
+}
+function pickVoice() {
+  let vs = [];
+  try { vs = speechSynthesis.getVoices().filter(v => /^ru/i.test(v.lang)); } catch (e) {}
+  const score = v => (MALE.test(v.name) ? 2 : 0) + (/google|natural|online/i.test(v.name) ? 1 : 0);
+  vs.sort((a, b) => score(b) - score(a));
+  VARS = [];
+  vs.forEach((v, i) => {
+    const nm = voiceName(v, i);
+    if (MALE.test(v.name)) VARS.push({ v, pitch: 1.05, label: nm });
+    else VARS.push({ v, pitch: .8, label: nm + ', пониже' }, { v, pitch: 1.2, label: nm });
+  });
+  if (!VARS.length) VARS = [{ v: null, pitch: .8, label: 'пониже' }, { v: null, pitch: 1.2, label: 'обычный' }];
+  VAR = VARS.find(x => x.label === S.voice) || VARS[0];
+  const vb = $('#voiceBtn');
+  if (vb) vb.textContent = '🗣 Голос: ' + VAR.label;
+}
+if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speak(t, who) {
+  return new Promise(res => {
+    if (!S.sound || !('speechSynthesis' in window)) return res();
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(speakable(t));
+      u.lang = 'ru-RU'; if (VAR && VAR.v) u.voice = VAR.v; u.rate = 1.6;
+      // у Малона голос всегда выше, чем у Леона
+      const p = VAR ? VAR.pitch : .8;
+      u.pitch = who === 'malon' ? Math.min(2, p + .85) : p;
+      u.onend = u.onerror = () => res();
+      speechSynthesis.speak(u);
+    } catch (e) { res(); }
+  });
+}
+function say(text, voiceText) {
+  const b = document.querySelector('.screen.on .bubble');
+  if (b) { b.textContent = text; b.dataset.say = voiceText || text; }
+  return speak(voiceText || text);
+}
+document.addEventListener('click', e => { const b = e.target.closest('.bubble'); if (b && b.dataset.say) speak(b.dataset.say); });
+
+// --- настроение Леона ---
+let MOOD = 'neutral', moodTimer = 0;
+const malonOn = () => S.malon.owned && S.malon.on;
+function drawLeons(anim) {
+  const mo = malonOn();
+  document.querySelectorAll('.leon').forEach(el => {
+    el.innerHTML = leonSVG(MOOD, S.wear);
+    el.firstChild.classList.add(anim || 'idle');
+  });
+  // Малон, если куплен и дома, сидит рядом и переживает вместе с Леоном
+  document.querySelectorAll('.malon').forEach(el => {
+    el.innerHTML = mo ? geckoSVG(MOOD) : '';
+    if (mo) el.firstChild.classList.add(anim || 'idle');
+  });
+  document.querySelectorAll('.pair').forEach(p => p.classList.toggle('wm', mo));
+}
+function setMood(m, anim) {
+  MOOD = m; drawLeons(anim);
+  clearTimeout(moodTimer);
+  if (m !== 'neutral') moodTimer = setTimeout(() => { MOOD = 'neutral'; drawLeons(); }, 2800);
+}
+const PRAISE = ['Молодец!', 'Верно!', 'Ура!', 'Здорово!', 'Супер!', 'Отлично!', 'Так держать!', 'Умница!'];
+const PRAISE2 = ['Вот, получилось!', 'Теперь верно!', 'Правильно!'];
+const OOPS = ['Ой… Попробуй ещё разок!', 'Не совсем. Подумай ещё!', 'Почти! Попробуй снова.'];
+function happy(text) { setMood('happy', 'hop'); if (text) say(text); }
+function oops(text) { setMood('sad', 'sad'); sfx('wrong'); say(text || pick(OOPS)); }
+
+function updWallet() {
+  document.querySelectorAll('.wallet').forEach(w => { w.innerHTML = `${COIN}<b>${S.coins}</b>`; });
+}
+function addCoins(n) {
+  S.coins += n; save(); updWallet(); sfx('coin');
+  if (L) L.earned += n;
+  const w = document.querySelector('.screen.on .wallet');
+  if (w) { const f = document.createElement('span'); f.className = 'float'; f.textContent = '+' + n; w.appendChild(f); setTimeout(() => f.remove(), 1100); }
+}
+
+// ===================== Ожидания (можно прервать кнопкой «назад») =====================
+class Abort extends Error {}
+let PENDING = [];
+function waitable(exec) {
+  return new Promise((res, rej) => {
+    const e = { rej };
+    PENDING.push(e);
+    exec(v => { PENDING = PENDING.filter(x => x !== e); res(v); });
+  });
+}
+function abortAll() { const p = PENDING; PENDING = []; p.forEach(e => e.rej(new Abort())); }
+const wait = ms => waitable(res => setTimeout(res, ms));
+async function sayWait(text) {
+  const p = say(text);
+  await waitable(res => {
+    let done = false;
+    const fin = () => { if (!done) { done = true; res(); } };
+    p.then(() => setTimeout(fin, 250));
+    setTimeout(fin, Math.min(7000, Math.max(1200, text.length * (S.sound ? 55 : 45))));
+  });
+}
+
+// ===================== Доска =====================
+const G = { st: null, flip: false, els: new Map(), sel: -1, selMoves: [], fly: null };
+let TAP = null, MOVE = null, L = null;
+const sqsEl = $('#sqs'), pcsEl = $('#pcs'), arrEl = $('#arrows');
+for (let i = 0; i < 64; i++) sqsEl.appendChild(document.createElement('div'));
+for (let i = 0; i < 8; i++) { $('#ranks').appendChild(document.createElement('div')); $('#files').appendChild(document.createElement('div')); }
+
+const disp = sq => G.flip ? [7 - (sq & 7), sq >> 3] : [sq & 7, 7 - (sq >> 3)];
+function layout() {
+  [...sqsEl.children].forEach((d, i) => {
+    const col = i & 7, row = i >> 3, f = G.flip ? 7 - col : col, r = G.flip ? row : 7 - row;
+    d.className = 'sq ' + ((f + r) % 2 ? 'l' : 'd');
+    d.dataset.sq = r * 8 + f;
+  });
+  [...$('#ranks').children].forEach((d, i) => { d.textContent = G.flip ? i + 1 : 8 - i; d.className = ''; });
+  [...$('#files').children].forEach((d, i) => { d.textContent = FILES[G.flip ? 7 - i : i]; d.className = ''; });
+}
+const sqEl = sq => sqsEl.querySelector(`[data-sq="${sq}"]`);
+function render() {
+  const seen = new Set();
+  G.st.b.forEach((p, sq) => {
+    if (!p) return;
+    seen.add(p.id);
+    let el = G.els.get(p.id);
+    const [x, y] = disp(sq);
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'pc pop';
+      el.innerHTML = pieceSVG(p.t, p.c);
+      el.style.transform = `translate(${x * 100}%, ${y * 100}%)`;
+      pcsEl.appendChild(el); G.els.set(p.id, el);
+    } else el.style.transform = `translate(${x * 100}%, ${y * 100}%)`;
+  });
+  for (const [id, el] of G.els) if (!seen.has(id)) { G.els.delete(id); el.classList.add('gone'); setTimeout(() => el.remove(), 320); }
+}
+// доска всегда белыми вниз: буквы идут a→h слева направо, даже когда ребёнок играет чёрными
+function setPos(fen) {
+  G.st = parseFEN(fen); G.flip = false;
+  pcsEl.innerHTML = ''; G.els.clear(); G.fly = null;
+  layout(); clearMarks(); render();
+}
+function applyMoves(list) { for (const s of list) G.st = makeMove(G.st, findMove(G.st, s)); render(); }
+function place(sqn, t, c) { G.st.b[sqIdx(sqn)] = { t, c, id: PID++ }; render(); }
+function clearMarks(...cls) {
+  const all = cls.length ? cls : ['mark', 'hint', 'last', 'sel', 'mv', 'cap'];
+  sqsEl.querySelectorAll('.sq').forEach(d => d.classList.remove(...all));
+  if (!cls.length) arrEl.innerHTML = '';
+}
+function marks(list, cls = 'mark') { (list || []).forEach(n => sqEl(typeof n === 'string' ? sqIdx(n) : n).classList.add(cls)); }
+function flash(sq, cls) { const d = sqEl(sq); d.classList.remove(cls); void d.offsetWidth; d.classList.add(cls); setTimeout(() => d.classList.remove(cls), 800); }
+function showName(sq) { const d = sqEl(sq), n = document.createElement('div'); n.className = 'nm'; n.textContent = sqName(sq); d.appendChild(n); setTimeout(() => n.remove(), 1400); }
+function arrow(a, b, color = '#ffb300') {
+  const [x1, y1] = disp(typeof a === 'string' ? sqIdx(a) : a), [x2, y2] = disp(typeof b === 'string' ? sqIdx(b) : b);
+  const ax = x1 + .5, ay = y1 + .5, bx = x2 + .5, by = y2 + .5, len = Math.hypot(bx - ax, by - ay), ux = (bx - ax) / len, uy = (by - ay) / len;
+  const tx = bx - ux * .12, ty = by - uy * .12, cx = tx - ux * .38, cy = ty - uy * .38, px = -uy * .24, py = ux * .24;
+  arrEl.innerHTML += `<line x1="${ax}" y1="${ay}" x2="${cx}" y2="${cy}" stroke="${color}" stroke-width=".17" stroke-linecap="round" opacity=".9"/>` +
+    `<polygon points="${tx},${ty} ${cx + px},${cy + py} ${cx - px},${cy - py}" fill="${color}" opacity=".9"/>`;
+}
+function setLast(m) { clearMarks('last'); if (m) { sqEl(m.from).classList.add('last'); sqEl(m.to).classList.add('last'); } }
+function showFly(sq) {
+  if (G.fly) G.fly.remove();
+  const el = document.createElement('div'); el.className = 'fly'; el.innerHTML = FLY;
+  const [x, y] = disp(sq); el.style.transform = `translate(${x * 100}%, ${y * 100}%)`;
+  pcsEl.appendChild(el); G.fly = el;
+}
+async function eatFly() {
+  sfx('chomp'); happy(pick(['Ням!', 'Ам! Вкусно!', 'Поймал!', 'Ням-ням!']));
+  if (G.fly) { const f = G.fly; f.classList.add('eaten'); G.fly = null; setTimeout(() => f.remove(), 400); }
+  await wait(1000);
+}
+
+$('#board').addEventListener('pointerdown', e => {
+  const r = e.currentTarget.getBoundingClientRect();
+  const col = Math.floor((e.clientX - r.left) / r.width * 8), row = Math.floor((e.clientY - r.top) / r.height * 8);
+  if (col < 0 || col > 7 || row < 0 || row > 7) return;
+  onTap((G.flip ? row : 7 - row) * 8 + (G.flip ? 7 - col : col));
+});
+function deselect() { G.sel = -1; G.selMoves = []; clearMarks('sel', 'mv', 'cap'); }
+function select(sq) {
+  deselect(); G.sel = sq;
+  G.selMoves = legal(G.st).filter(m => m.from === sq);
+  sqEl(sq).classList.add('sel');
+  G.selMoves.forEach(m => sqEl(m.to).classList.add(G.st.b[m.to] ? 'cap' : 'mv'));
+  sfx('tap');
+  if (!G.selMoves.length) say('Эта фигура сейчас не может ходить.');
+}
+function onTap(sq) {
+  if (TAP) { const f = TAP; TAP = null; f(sq); return; }
+  if (!MOVE) return;
+  const p = G.st.b[sq];
+  if (G.sel >= 0) {
+    let m = G.selMoves.find(x => x.to === sq);
+    // король + тап по своей ладье = рокировка
+    if (!m && p && p.t === 'R' && G.st.b[G.sel].t === 'K') m = G.selMoves.find(x => x.castle === ((sq & 7) === 7 ? 'K' : 'Q'));
+    if (m) { const cb = MOVE.cb; deselect(); MOVE = null; cb(m); return; }
+  }
+  if (p && p.c === MOVE.color && G.st.turn === MOVE.color && G.sel !== sq) select(sq);
+  else deselect();
+}
+const userTap = () => waitable(res => { TAP = res; });
+const userMove = color => waitable(res => { MOVE = { color, cb: res }; });
+async function doMove(m) {
+  const cap = G.st.b[m.to];
+  G.st = makeMove(G.st, m);
+  setLast(m); render(); sfx(cap ? 'capture' : 'move');
+  await wait(330);
+}
+const mv = s => findMove(G.st, s);
+
+// ===================== Кнопки =====================
+function actions(list) {
+  const a = $('#act'); a.innerHTML = '';
+  list.forEach(b => {
+    if (b.html) { a.insertAdjacentHTML('beforeend', b.html); return; }
+    const el = document.createElement('button');
+    el.className = 'btn ' + (b.cls || ''); el.innerHTML = b.label;
+    el.onclick = () => { sfx('tap'); b.onTap && b.onTap(el); };
+    a.appendChild(el);
+  });
+}
+const userButtons = btns => waitable(res => actions(btns.map((b, i) => ({ ...b, onTap: () => { actions([]); res(b.value !== undefined ? b.value : i); } }))));
+
+// ===================== Задания =====================
+async function give(tries, reward = [2, 1], quiet = false) {
+  const amt = tries === 0 ? reward[0] : reward[1];
+  if (amt) addCoins(amt);
+  sfx('right');
+  happy(quiet ? null : (tries === 0 ? pick(PRAISE) : pick(PRAISE2)));
+  await wait(quiet ? 300 : 1300);
+}
+async function tell(text, o = {}) {
+  if (o.marks) marks(o.marks);
+  if (o.arrows) o.arrows.forEach(([a, b, c]) => arrow(a, b, c));
+  if (o.glow) o.glow();
+  say(text, o.voice);
+  await userButtons([{ label: o.btn || 'Дальше ▶', cls: 'next' }]);
+  if (o.marks || o.arrows) { clearMarks('mark'); arrEl.innerHTML = ''; }
+  document.querySelectorAll('.glow').forEach(d => d.classList.remove('glow'));
+}
+async function askSquare({ text, ok, hint, wrong, reward = [2, 1], quiet = false, name = false }) {
+  if (text) say(text);
+  let tries = 0;
+  for (;;) {
+    const sq = await userTap();
+    if (ok(sq)) { flash(sq, 'ok'); clearMarks('hint'); await give(tries, reward, quiet); return sq; }
+    tries++; L.errors++;
+    flash(sq, 'no'); if (name) showName(sq);
+    oops(wrong ? wrong(sq) : null);
+    if (tries >= 2 && hint) marks(hint(), 'hint');
+  }
+}
+async function askChoice({ text, options, wrong, reward = [2, 1] }) {
+  if (text) say(text);
+  let tries = 0;
+  await waitable(res => {
+    const a = $('#act'); a.innerHTML = '';
+    options.forEach(o => {
+      const el = document.createElement('button');
+      el.className = 'btn choice ' + (o.cls || ''); el.innerHTML = o.label;
+      el.onclick = () => {
+        if (el.disabled) return;
+        if (o.ok) { el.classList.add('right'); res(); }
+        else { tries++; L.errors++; el.classList.add('wrongb'); el.disabled = true; oops(o.say || wrong); }
+      };
+      a.appendChild(el);
+    });
+  });
+  await give(tries, reward);
+  actions([]);
+}
+// hint: строка хода 'e2e4' или функция, возвращающая ход; showFrom — сразу подсветить фигуру
+async function askMove({ text, accept, hint, wrong, wrongText, reward = [3, 1], showFrom = false, color, btns }) {
+  if (text) say(text);
+  const hm = () => { const h = typeof hint === 'function' ? hint() : hint; return typeof h === 'string' ? findMove(G.st, h) : h; };
+  if (showFrom && hint) { const h = hm(); if (h) marks([h.from], 'hint'); }
+  let tries = 0;
+  for (;;) {
+    if (btns) actions(btns(tries));
+    const prev = G.st;
+    const m = await userMove(color || G.st.turn);
+    clearMarks('hint'); arrEl.innerHTML = '';
+    await doMove(m);
+    const r = accept(m, prev, G.st);
+    if (r === true) { if (btns) actions([]); await give(tries, reward); return m; }
+    tries++; L.errors++;
+    const handled = wrong ? await wrong(m, prev) : false;
+    if (!handled) oops(typeof r === 'string' ? r : (wrongText || null));
+    await wait(900);
+    G.st = prev; setLast(null); render();
+    if (hint) {
+      const h = (G.st = prev, hm());
+      if (h) { marks([h.from], 'hint'); if (tries >= 2) arrow(h.from, h.to); }
+    }
+  }
+}
+
+// ===================== Уроки =====================
+const emptyFEN = '8/8/8/8/8/8/8/8 w - -';
+
+async function lessonSetup() {
+  setPos(emptyFEN);
+  await tell('Сейчас мы расставим фигуры! Смотри: в правом нижнем углу — белая клетка. Запомни: белое поле — справа!', { marks: ['h1'] });
+  const W = [
+    ['R', ['a1', 'h1'], 'Ладьи похожи на башенки. Они стоят в углах доски. Поставь две белые ладьи!', 'Ладьи стоят в самых углах.'],
+    ['N', ['b1', 'g1'], 'Рядом с ладьями стоят кони. Поставь белых коней!', 'Кони стоят рядом с ладьями.'],
+    ['B', ['c1', 'f1'], 'Рядом с конями — слоны. Поставь белых слонов!', 'Слоны стоят рядом с конями.'],
+    ['Q', ['d1'], 'Ферзь любит свой цвет: белый ферзь встаёт на белую клетку. Поставь ферзя!', 'Белый ферзь — на белую клетку в середине ряда.'],
+    ['K', ['e1'], 'Королю осталось одно место — рядом с ферзём. Поставь короля!', 'Король встаёт рядом с ферзём.'],
+    ['P', [...FILES].map(f => f + '2'), 'Пешки — как солдатики. Они встают в ряд перед фигурами. Поставь все 8 пешек!', 'Пешки стоят во втором ряду, прямо перед фигурами.'],
+  ];
+  for (const s of W) await placeStep('w', ...s);
+  await tell('Ура! Белые готовы. Теперь чёрные: они стоят напротив, точно так же.');
+  const B = [
+    ['R', ['a8', 'h8'], 'Поставь чёрные ладьи в углы!', 'Чёрные ладьи — в верхних углах.'],
+    ['N', ['b8', 'g8'], 'Теперь чёрных коней!', 'Чёрные кони — рядом с ладьями.'],
+    ['B', ['c8', 'f8'], 'Теперь чёрных слонов!', 'Чёрные слоны — рядом с конями.'],
+    ['Q', ['d8'], 'Чёрный ферзь любит чёрную клетку. Поставь его!', 'Чёрный ферзь стоит напротив белого ферзя, на чёрной клетке.'],
+    ['K', ['e8'], 'И чёрного короля — напротив белого короля!', 'Чёрный король — напротив белого короля.'],
+  ];
+  for (const s of B) await placeStep('b', ...s);
+  actions([]);
+  say('А чёрные пешки я поставлю сам!');
+  for (const f of FILES) { place(f + '7', 'P', 'b'); sfx('move'); await wait(160); }
+  await wait(500);
+  await tell('Готово! Все 32 фигуры на месте. Запомни: белые всегда ходят первыми!');
+}
+async function placeStep(c, t, sqs, text, wrong) {
+  const left = new Set(sqs);
+  const tray = () => actions([{ html: `<div class="tray">Ставим: ${pieceSVG(t, c)}${left.size > 1 ? '× ' + left.size : ''}</div>` }]);
+  tray(); say(text);
+  while (left.size) {
+    const sq = await askSquare({
+      ok: s => left.has(sqName(s)) && !G.st.b[s], hint: () => [...left], wrong: () => wrong,
+      reward: t === 'P' ? [1, 1] : [2, 1], quiet: left.size > 1,
+    });
+    place(sqName(sq), t, c); left.delete(sqName(sq)); tray();
+  }
+}
+
+async function lessonCoords() {
+  setPos(emptyFEN);
+  await tell('У каждой клетки есть имя. Внизу — буквы: a, b, c, d, e, f, g, h.', {
+    voice: 'У каждой клетки есть имя. Внизу — буквы: а, бэ, цэ, дэ, е, эф, жэ, аш.',
+    glow: () => $('#files').querySelectorAll('div').forEach(d => d.classList.add('glow')),
+  });
+  await tell('А сбоку — цифры, от 1 до 8.', { glow: () => $('#ranks').querySelectorAll('div').forEach(d => d.classList.add('glow')) });
+  await tell('Имя клетки — это буква и цифра. Вот клетка e4: буква e снизу и цифра 4 сбоку.', { marks: ['e4'], voice: 'Имя клетки — это буква и цифра. Вот клетка е 4: буква е снизу и цифра 4 сбоку.' });
+  await tell('Я хамелеон и очень люблю мух! Помоги мне их ловить: говори, на какой клетке сидит муха.');
+  const used = new Set();
+  const rnd = () => { let s; do s = Math.random() * 64 | 0; while (used.has(s)); used.add(s); return s; };
+  for (let i = 0; i < 5; i++) {
+    const sq = rnd(), f = sq & 7, r = sq >> 3;
+    showFly(sq);
+    const d = new Set([sq]);
+    const cand = shuffle([[f, (r + 1 + (Math.random() * 6 | 0)) % 8], [(f + 1 + (Math.random() * 6 | 0)) % 8, r], [r % 8, f % 8], [(f + 2) % 8, (r + 3) % 8]]);
+    const opts = [sq];
+    for (const [ff, rr] of cand) { const s = rr * 8 + ff; if (!d.has(s) && opts.length < 3) { d.add(s); opts.push(s); } }
+    await askChoice({
+      text: 'Где сидит муха?',
+      options: shuffle(opts).map(s => ({ label: sqName(s), ok: s === sq })),
+      wrong: 'Нет! Сначала смотри на букву внизу, потом на цифру сбоку.',
+    });
+    await eatFly();
+  }
+  await tell('А теперь наоборот: я называю клетку, а ты сажаешь туда муху!');
+  for (let i = 0; i < 5; i++) {
+    const sq = rnd(), n = sqName(sq);
+    await askSquare({
+      text: `Посади муху на клетку ${n}!`, ok: s => s === sq, hint: () => [sq], name: true,
+      wrong: s => `Это клетка ${sqName(s)}. А нужна ${n}.`,
+    });
+    showFly(sq); await wait(500); await eatFly();
+  }
+  await tell('Ты знаешь имена всех клеток! Теперь ты настоящий шахматный штурман.');
+}
+
+async function lessonPawns() {
+  setPos('8/8/8/8/8/8/4P3/8 w - -');
+  await tell('Пешка ходит только вперёд, на одну клетку. Но первым ходом она может прыгнуть сразу на две!');
+  await askMove({ text: 'Нажми на пешку и сходи на две клетки вперёд!', accept: m => mstr(m) === 'e2e4' || 'Это одна клетка. А первым ходом можно на две!', hint: 'e2e4', showFrom: true });
+  G.st.turn = 'w';
+  await askMove({ text: 'А теперь — на одну клетку вперёд.', accept: m => mstr(m) === 'e4e5', hint: 'e4e5' });
+  G.st.turn = 'w';
+  place('e6', 'P', 'b'); place('d6', 'P', 'b');
+  await tell('Перед пешкой встала чёрная пешка. Вперёд пешка не бьёт — дальше идти нельзя!', { marks: ['e6'] });
+  await tell('Зато пешка бьёт наискосок: на одну клетку вперёд и вбок.', { arrows: [['e5', 'd6', '#ff5a5a'], ['e5', 'f6', '#ff5a5a']] });
+  await askMove({ text: 'Съешь чёрную пешку!', accept: m => mstr(m) === 'e5d6', hint: 'e5d6' });
+  setPos('8/8/4p3/2p4p/1P1P2P1/8/8/8 w - -');
+  await askMove({ text: 'Найди, какую чёрную пешку можно съесть, и съешь её!', accept: (m, prev) => !!prev.b[m.to] || 'Это не взятие. Пешка бьёт наискосок!', hint: 'g4h5' });
+  await tell('Чёрные пешки ходят вниз, навстречу белым. А назад пешки никогда не ходят!');
+  await tell('Теперь сыграем в пешечный бой! Кто первым доведёт пешку до конца доски — тот и победил. Ещё можно съесть все пешки соперника.');
+  for (;;) {
+    const res = await pawnBattle();
+    if (res === 'w') { sfx('win'); setMood('happy', 'hop'); addCoins(15); await tell('Победа! Твоя пешка дошла до конца! Держи 15 монеток!'); }
+    else if (res === 'draw') { addCoins(5); await tell('Ничья! Никто не может ходить. Хорошая игра!'); }
+    else { L.errors += 2; addCoins(2); setMood('sad', 'sad'); await tell('В этот раз выиграли чёрные. Не беда — в следующий раз получится!'); }
+    const again = await userButtons([{ label: '↺ Сыграть ещё', value: 1 }, { label: 'Дальше ▶', cls: 'next', value: 0 }]);
+    if (!again) break;
+  }
+}
+async function pawnBattle() {
+  setPos('8/pppppppp/8/8/8/8/PPPPPPPP/8 w - -');
+  say('Ты играешь белыми. Твой ход!');
+  for (;;) {
+    let w = pawnWinner(G.st); if (w) return w;
+    const before = material(G.st, 'b');
+    await doMove(await userMove('w'));
+    if (material(G.st, 'b') < before) { addCoins(1); happy(pick(['Ням! Съел пешку!', 'Отличный удар!', 'Есть!'])); }
+    w = pawnWinner(G.st); if (w) return w;
+    await wait(550);
+    const mine = material(G.st, 'w');
+    await doMove(pawnAI(G.st));
+    if (material(G.st, 'w') < mine) { setMood('sad', 'sad'); say(pick(['Ой, нашу пешку съели.', 'Ай! Береги пешки.'])); }
+  }
+}
+
+const LINE_W = [
+  ['e2e4', 'Первое правило: займи центр! Сходи пешкой с e2 на e4.', 'Займи центр пешкой!'],
+  ['e7e5', 'Чёрные тоже заняли центр.'],
+  ['g1f3', 'Второе правило: выводи коней! Конь — на f3. Он нападает на пешку e5.', 'Выводи коня!'],
+  ['b8c6', 'Чёрные защитили пешку конём.'],
+  ['f1c4', 'Теперь слон! Поставь его на c4 — он смотрит на клетку f7.', 'Выводи слона — пусть смотрит на f7!'],
+  ['f8c5', 'Чёрные тоже вывели слона.'],
+  ['e1g1', 'Третье правило: спрячь короля! Сделай рокировку — король идёт на g1.', 'Спрячь короля рокировкой!'],
+  ['g8f6', 'Чёрный конь напал на пешку e4.'],
+  ['d2d3', 'Защити пешку e4: пешка d2 — на d3. Заодно откроется дорога второму слону.', 'Защити пешку e4 пешкой!'],
+  ['d7d6', 'Чёрные сделали так же.'],
+  ['b1c3', 'Выведи второго коня на c3. Теперь все кони и слоны в игре!', 'Выведи второго коня!'],
+  ['e8g8', 'Чёрные тоже спрятали короля.'],
+];
+const LINE_B = [
+  ['e2e4', 'Белые пошли пешкой e4 — заняли центр.'],
+  ['e7e5', 'Ответь тем же: пешку с e7 — на e5!', 'Займи центр пешкой!'],
+  ['g1f3', 'Белый конь напал на твою пешку e5!'],
+  ['b8c6', 'Защити её: конь с b8 — на c6.', 'Защити пешку конём!'],
+  ['f1c4', 'Белый слон целится в клетку f7.'],
+  ['g8f6', 'Выведи второго коня на f6 — он нападёт на пешку e4!', 'Выводи второго коня!'],
+  ['b1c3', 'Белые защитили пешку конём.'],
+  ['f8c5', 'Слона — на c5! Он смотрит на клетку f2.', 'Выводи слона!'],
+  ['d2d3', 'Белые открыли дорогу второму слону.'],
+  ['d7d6', 'Пешку d7 — на d6: она защитит e5 и откроет дорогу слону.', 'Защити пешку e5 пешкой!'],
+  ['e1g1', 'Белые спрятали короля рокировкой.'],
+  ['e8g8', 'Твоя очередь: рокировка! Король идёт на g8.', 'Спрячь короля!'],
+];
+async function lessonOpening(line, color) {
+  setPos(START);
+  await tell('Дебют — это начало партии. Запомни три правила: займи центр, выведи коней и слонов, спрячь короля рокировкой.');
+  if (color === 'b') await tell('Сегодня ты играешь чёрными — твои фигуры наверху. Белые ходят первыми — посмотрим, что они придумают.');
+  for (const round of [1, 2]) {
+    if (round === 2) { await tell('А теперь сыграй этот дебют сам! Я подскажу, если что.'); setPos(START); }
+    for (const [s, full, short] of line) {
+      if (G.st.turn === color) {
+        await askMove({ text: round === 1 ? full : short, accept: m => mstr(m) === s, hint: s, showFrom: round === 1, wrongText: 'Хороший ход, но давай сыграем по плану. ' + short });
+      } else {
+        await wait(400); await doMove(mv(s)); await sayWait(full);
+      }
+    }
+  }
+  setMood('happy', 'hop');
+  await tell('Центр, кони, слоны и рокировка — ты сыграл дебют как настоящий гроссмейстер!');
+}
+
+async function lessonCastle() {
+  const yes = (ok, say) => [{ label: '✔ Да', cls: 'yes', ok, say }, { label: '✘ Нет', cls: 'no', ok: !ok, say }];
+  setPos('4k3/8/8/8/8/8/PPP2PPP/R3K2R w KQ -');
+  await tell('Рокировка — особый ход. Король и ладья ходят вместе: король шагает на две клетки к ладье, а ладья перепрыгивает через короля.');
+  await askMove({ text: 'Сделай короткую рокировку: нажми на короля и поставь его на g1.', accept: m => m.castle === 'K' || 'Король должен шагнуть на две клетки вправо, на g1.', hint: 'e1g1', showFrom: true });
+  await tell('Король спрятался в уголок, а ладья встала рядом — охранять!');
+  setPos('4k3/8/8/8/8/8/PPP2PPP/R3K2R w KQ -');
+  await askMove({ text: 'А теперь длинная рокировка: король идёт на две клетки влево, на c1.', accept: m => m.castle === 'Q' || 'Король шагает на две клетки влево, на c1.', hint: 'e1c1', showFrom: true });
+  await tell('Рокировку можно сделать один раз за игру. И только если король и ладья ещё ни разу не ходили.');
+  await tell('Ещё рокировку нельзя делать, если между королём и ладьёй стоят фигуры, если королю шах или если король проходит через клетку, которую бьёт соперник.');
+  setPos('4k3/8/8/8/8/8/PPP2PPP/R3KB1R w KQ -');
+  await askChoice({ text: 'Можно сейчас сделать короткую рокировку?', options: yes(false, 'Нет! Между королём и ладьёй стоит слон.'), wrong: 'Нет! Между королём и ладьёй стоит слон.' });
+  setPos('k3r3/8/8/8/8/8/PPP2PPP/R3K2R w KQ -');
+  await askChoice({ text: 'А сейчас можно? Посмотри на чёрную ладью.', options: yes(false, 'Нет! Королю шах — сначала надо спастись.'), wrong: 'Нет! Королю шах.' });
+  setPos('k7/8/8/8/2b5/8/PPP2PPP/R3K2R w KQ -');
+  await askChoice({ text: 'А теперь? Посмотри на чёрного слона.', options: yes(false, 'Нет! Слон бьёт клетку f1 — король не может через неё пройти.'), wrong: 'Нет! Слон бьёт клетку f1.' });
+  setPos('k7/8/8/8/8/8/PPP2PPP/R3K2R w KQ -');
+  await askChoice({ text: 'А сейчас?', options: yes(true, 'Можно! Всё свободно, и никто не мешает.'), wrong: 'Можно! Всё свободно.' });
+  await askMove({ text: 'Правильно, можно! Сделай короткую рокировку.', accept: m => m.castle === 'K', hint: 'e1g1' });
+  setPos('r3k2r/pp3ppp/8/8/8/8/8/4K3 b kq -');
+  await askMove({ text: 'Чёрные тоже умеют! Сделай чёрными короткую рокировку: король идёт на g8.', accept: m => m.castle === 'K' || 'Короткая рокировка — в сторону ближней ладьи, король на g8.', hint: 'e8g8', showFrom: true });
+  await tell('Отлично! Теперь ты умеешь прятать короля рокировкой.');
+}
+
+async function defend(text, okList, hintMv, wrongText) {
+  const m = await askMove({
+    text, accept: x => okList.includes(mstr(x)), hint: hintMv,
+    wrongText: wrongText || 'Так не защитишься. Защити клетку f7!',
+    wrong: async () => {
+      const mates = mateIn1Moves(G.st);
+      if (!mates.length) return false;
+      await wait(450); await doMove(mates[0]);
+      oops('Ой! Это мат! Надо было защитить f7.');
+      await wait(1600);
+      return true;
+    },
+  });
+  return mstr(m);
+}
+async function auto(s, text, arrows) {
+  await wait(450); await doMove(mv(s));
+  if (arrows) arrows.forEach(([a, b]) => arrow(a, b, '#ff5a5a'));
+  await sayWait(text);
+}
+async function lessonScholar() {
+  setPos(START);
+  await tell('Детский мат — это ловушка для новичков. Белые быстро нападают на клетку f7. Смотри!', { marks: ['f7'] });
+  const demo = [['e2e4', 'Белые: пешка на e4.'], ['e7e5', 'Чёрные: пешка на e5.'], ['f1c4', 'Белый слон встал на c4 и смотрит на f7.'],
+    ['b8c6', 'Чёрные вывели коня.'], ['d1h5', 'Белый ферзь тоже целится в f7!'], ['g8f6', 'Чёрные не заметили угрозу…'],
+    ['h5f7', 'Ферзь съел пешку f7. Мат! Это и есть детский мат.']];
+  for (const [s, t] of demo) {
+    await doMove(mv(s));
+    const o = s === 'd1h5' ? { arrows: [['h5', 'f7', '#ff5a5a'], ['c4', 'f7', '#ff5a5a']] } : {};
+    if (s === 'h5f7') setMood('sad', 'sad');
+    await tell(t, o);
+  }
+  await tell('Клетку f7 защищает только король. Научимся защищаться — и ловушка не сработает! Ты играешь чёрными, они наверху.');
+
+  setPos(START); applyMoves(['e2e4', 'e7e5', 'f1c4', 'b8c6', 'd1h5']);
+  await tell('Белые снова готовят детский мат: ферзь и слон целятся в f7.', { arrows: [['h5', 'f7', '#ff5a5a'], ['c4', 'f7', '#ff5a5a']] });
+  const m1 = await defend('Защити f7! Можно прогнать ферзя пешкой g6 или поставить своего ферзя на e7.', ['g7g6', 'd8e7', 'd8f6'], 'g7g6');
+  if (m1 === 'g7g6') {
+    await auto('h5f3', 'Ферзь отскочил на f3 и снова целится в f7!', [['f3', 'f7']]);
+    await defend('Закрой ферзю дорогу: поставь коня на f6!', ['g8f6', 'd8f6', 'd8e7'], 'g8f6');
+  } else await sayWait('Твой ферзь защищает f7. Мата не будет!');
+  await tell('Отлично! Ловушка не сработала.');
+
+  setPos(START); applyMoves(['e2e4', 'e7e5', 'd1h5']);
+  await tell('Бывает и так: белый ферзь выходит в самом начале.', { arrows: [['h5', 'e5', '#ff5a5a']] });
+  await defend('Ферзь напал на пешку e5. Защити её конём или пешкой!', ['b8c6', 'd7d6'], 'b8c6', 'Пешка e5 без защиты. Защити её конём или пешкой!');
+  await auto('f1c4', 'Слон пришёл на помощь ферзю. Опять угроза мата на f7!', [['h5', 'f7'], ['c4', 'f7']]);
+  const m3 = await defend('Как защититься?', ['g7g6', 'd8e7', 'd8f6'], 'g7g6');
+  if (m3 === 'g7g6') {
+    await auto('h5f3', 'Ферзь снова целится в f7!', [['f3', 'f7']]);
+    await defend('Защити f7 ещё раз!', ['g8f6', 'd8f6', 'd8e7'], 'g8f6');
+  }
+  setMood('happy', 'hop');
+  await tell('Ура! Теперь детский мат тебе не страшен. Главное — следи за клеткой f7!');
+}
+
+const MATE1 = [
+  ['6k1/8/6K1/8/8/8/8/R7 w - -', 'Король помогает ладье. Поставь мат одним ходом!'],
+  ['k7/8/1K6/8/8/8/8/7Q w - -', 'Ферзь и король вместе. Поставь мат!'],
+  ['4k3/R7/8/8/8/8/8/2K4R w - -', 'Две ладьи. Найди мат!'],
+  ['6k1/5ppp/8/8/8/8/5PPP/R5K1 w - -', 'Король спрятался за пешками. Поставь мат ладьёй!'],
+  ['r5k1/5ppp/8/8/8/8/5PPP/6K1 b - -', 'Теперь ты играешь чёрными — они наверху! Поставь мат ладьёй.'],
+  ['5rk1/5pp1/8/7Q/8/3B4/8/6K1 w - -', 'Ферзь и слон вместе. Найди мат!'],
+  ['6k1/5p1p/5Qp1/8/8/8/1B6/6K1 w - -', 'Ферзь и слон на длинной диагонали. Мат!'],
+  ['6rk/6pp/8/6N1/8/8/8/6K1 w - -', 'Конь умеет прыгать! Поставь мат конём.'],
+];
+const MATE2 = [
+  ['8/3k4/R7/8/8/8/7R/6K1 w - -', 'Две ладьи — лесенка. Поставь мат в два хода!'],
+  ['2rr2k1/5ppp/8/8/8/8/3R1PPP/3R2K1 w - -', 'Мат в два хода. Подсказка: начни с размена ладей!'],
+  ['2r3k1/5ppp/8/8/8/8/3Q1PPP/3R2K1 w - -', 'Смелый ход! Отдай ферзя — и поставь мат ладьёй.'],
+];
+const hintBtn = (getMove, cost) => tries => [{ label: '💡 Подсказка', cls: 'soft', onTap: () => { const h = getMove(); if (h) { L.errors += cost; marks([h.from], 'hint'); arrow(h.from, h.to); say('Смотри на стрелку!'); } } }];
+const mateAccept = (m, prev, next) => (!legal(next).length && inCheck(next)) || (inCheck(next) ? 'Это шах, но король может спастись. Ищи мат!' : 'Это не шах. Мат — это шах, от которого нельзя спастись!');
+async function lessonMate1() {
+  setPos(MATE1[0][0]);
+  await tell('Мат — это шах, от которого королю никак не спастись. Кто поставил мат — тот победил!');
+  for (const [fen, text] of MATE1) {
+    setPos(fen);
+    const sol = mateIn1Moves(G.st)[0];
+    await askMove({ text, accept: mateAccept, hint: () => sol, btns: hintBtn(() => sol, 1) });
+    sfx('win'); await sayWait('Мат!');
+  }
+  await tell('Ты нашёл все маты! Настоящий охотник на королей.');
+}
+async function lessonMate2() {
+  setPos(MATE2[0][0]);
+  await tell('Теперь посложнее: мат в два хода. Сначала хитрый ход, потом соперник отвечает, а потом — мат!');
+  for (const [fen, text] of MATE2) {
+    setPos(fen);
+    const sol = legal(G.st).find(m => forcesMateIn2(G.st, m));
+    await askMove({ text, accept: (m, prev) => forcesMateIn2(prev, m) || 'Так соперник спасётся. Подумай ещё!', hint: () => sol, btns: hintBtn(() => sol, 1) });
+    if (status(G.st) === 'mate') { sfx('win'); await sayWait('Мат сразу! Здорово!'); continue; }
+    await wait(500);
+    await doMove(pick(legal(G.st)));
+    await sayWait('Соперник ответил. Теперь — мат в один ход!');
+    await askMove({ text: 'Поставь мат!', accept: mateAccept, hint: () => mateIn1Moves(G.st)[0], btns: hintBtn(() => mateIn1Moves(G.st)[0], 1) });
+    sfx('win'); await sayWait('Мат!');
+  }
+  await tell('Мат в два хода — это уже уровень мастера!');
+}
+
+async function lessonEnd(fen, intro, tips, done) {
+  setPos(fen);
+  for (const t of intro) await tell(t);
+  let moves = 0;
+  const btns = [
+    { label: '💡 Подсказка', cls: 'soft', onTap: () => { const h = bestMove(G.st, 4); if (h) { L.errors += 0.5; clearMarks('hint'); arrEl.innerHTML = ''; marks([h.from], 'hint'); arrow(h.from, h.to); say('Смотри на стрелку!'); } } },
+  ];
+  say('Твой ход!');
+  for (;;) {
+    actions(btns);
+    const prev = G.st;
+    const m = await userMove('w');
+    clearMarks('hint'); arrEl.innerHTML = '';
+    await doMove(m);
+    const st = status(G.st);
+    if (st === 'mate') { actions([]); sfx('win'); setMood('happy', 'hop'); addCoins(10); await tell(done); return; }
+    let bad = null;
+    if (st === 'stalemate') bad = 'Ой, это пат! Королю некуда ходить, но шаха нет — это ничья. Давай по-другому!';
+    else if (legal(G.st).some(x => G.st.b[x.to])) bad = 'Осторожно! Король может съесть твою фигуру. Поставь её подальше от короля или под защиту.';
+    if (bad) {
+      L.errors++; oops(bad);
+      await wait(2600);
+      G.st = prev; setLast(null); render();
+      continue;
+    }
+    if (st === 'check') say(pick(['Шах!', 'Шах королю!']));
+    moves++;
+    await wait(450);
+    await doMove(bestMove(G.st, 2, 25));
+    if (moves % 6 === 0) say(pick(tips));
+    else if (moves === 15) say('Если трудно — нажми «Подсказка», я помогу!');
+  }
+}
+
+const LESSONS = [
+  { id: 'setup', name: 'Расставь фигуры', icon: () => pieceSVG('R', 'w'), run: lessonSetup, sect: 'Знакомство' },
+  { id: 'coords', name: 'Имена клеток', icon: () => '<span class="tx">e4</span>', run: lessonCoords },
+  { id: 'pawns', name: 'Пешечный бой', icon: () => pieceSVG('P', 'w'), run: lessonPawns },
+  { id: 'openW', name: 'Дебют белыми', icon: () => pieceSVG('N', 'w'), run: () => lessonOpening(LINE_W, 'w'), sect: 'Дебют' },
+  { id: 'openB', name: 'Дебют чёрными', icon: () => pieceSVG('N', 'b'), run: () => lessonOpening(LINE_B, 'b') },
+  { id: 'castle', name: 'Рокировка', icon: () => pieceSVG('K', 'w'), run: lessonCastle },
+  { id: 'scholar', name: 'Защита от детского мата', icon: () => '🛡️', run: lessonScholar, sect: 'Мат' },
+  { id: 'mate1', name: 'Мат в 1 ход', icon: () => '🎯', run: lessonMate1 },
+  { id: 'mate2', name: 'Мат в 2 хода', icon: () => '⚡', run: lessonMate2 },
+  { id: 'rr', name: 'Две ладьи', icon: () => pieceSVG('R', 'w') + pieceSVG('R', 'w'), sect: 'Загони короля', run: () => lessonEnd('8/8/8/3k4/8/8/8/R3K2R w - -',
+    ['Загоним чёрного короля в угол и поставим мат двумя ладьями!', 'Это лесенка: одна ладья закрывает ряд, другая даёт шах. Ладьи шагают по очереди, а король отступает к краю.'],
+    ['Ладьи ходят по очереди: одна закрывает ряд, другая даёт шах — как лесенка!', 'Держи ладьи подальше от чёрного короля.', 'Король отступает к краю доски — там ему и мат!'],
+    'Мат двумя ладьями! Лесенка сработала!') },
+  { id: 'qk', name: 'Ферзь и король', icon: () => pieceSVG('Q', 'w'), run: () => lessonEnd('8/8/8/4k3/8/8/8/3QK3 w - -',
+    ['Теперь мат ферзём! Ферзь сильный, но один не справится — ему поможет король.', 'Ставь ферзя ходом коня от чёрного короля: так у короля остаётся всё меньше места. А когда он у края — подводи своего короля.'],
+    ['Ставь ферзя ходом коня от короля.', 'Когда король у края — подведи своего короля поближе.', 'Осторожно, пат! У чёрного короля всегда должен быть ход, пока ты не поставишь мат.'],
+    'Мат ферзём! Ты загнал короля!') },
+  { id: 'rk', name: 'Ладья и король', icon: () => pieceSVG('R', 'w') + pieceSVG('K', 'w'), run: () => lessonEnd('8/8/3k4/8/8/8/8/R3K3 w - -',
+    ['Самое трудное: мат одной ладьёй. Ладья отрезает короля, как забор, а твой король помогает.', 'Мат ставится, когда короли стоят друг напротив друга, а ладья даёт шах по краю доски.'],
+    ['Ладья отрезает короля, как забор.', 'Подводи своего короля поближе — он помогает ладье.', 'Мат будет, когда короли стоят друг напротив друга.'],
+    'Мат ладьёй! Это очень трудно, а ты справился!') },
+];
+
+// ===================== Экраны =====================
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id));
+  drawLeons(); updWallet(); window.scrollTo(0, 0);
+}
+function menu() {
+  abortAll(); TAP = MOVE = null; L = null; actions([]);
+  try { speechSynthesis.cancel(); } catch (e) {}
+  show('menu');
+  const c = $('#cards'); c.innerHTML = '';
+  LESSONS.forEach((l, i) => {
+    if (l.sect) c.insertAdjacentHTML('beforeend', `<div class="sect">${l.sect}</div>`);
+    const st = S.stars[l.id] || 0;
+    const b = document.createElement('button');
+    b.className = 'card';
+    b.innerHTML = `<div class="ic">${l.icon()}</div><b>${i + 1}. ${l.name}</b><i>${'★'.repeat(st)}${'☆'.repeat(3 - st)}</i>`;
+    b.onclick = () => { sfx('tap'); runLesson(l); };
+    c.appendChild(b);
+  });
+  say(pick(['Привет! Я Леон. Выбирай урок!', 'Сыграем в шахматы? Выбирай урок!', 'За верные ответы — монетки. А на монетки купим мне обновку!',
+    'Нажми «Покормить» — и я поймаю букашку языком!', S.malon.owned ? 'Мы с Малоном ждём тебя! Выбирай урок.' : 'В террариуме можно купить мне друга — геккона Малона!']));
+}
+async function runLesson(def) {
+  abortAll(); TAP = MOVE = null; G.sel = -1;
+  L = { def, errors: 0, earned: 0 };
+  show('lesson'); $('#lTitle').textContent = def.name; actions([]);
+  try {
+    await def.run();
+    await finishLesson();
+  } catch (e) { if (!(e instanceof Abort)) { console.error(e); menu(); } }
+}
+async function finishLesson() {
+  const stars = L.errors <= 1 ? 3 : L.errors <= 4 ? 2 : 1;
+  addCoins(stars * 5);
+  S.stars[L.def.id] = Math.max(S.stars[L.def.id] || 0, stars); save();
+  $('#rStars').innerHTML = '★'.repeat(stars) + `<span class="off">${'★'.repeat(3 - stars)}</span>`;
+  $('#rGot').innerHTML = `${COIN} +${L.earned}`;
+  $('#result').classList.add('on');
+  MOOD = 'happy'; drawLeons('hop'); sfx('win');
+  speak(stars === 3 ? 'Урок пройден! Три звезды! Ты молодец!' : 'Урок пройден! Молодец!');
+  const again = await waitable(res => { $('#rAgain').onclick = () => res(true); $('#rMenu').onclick = () => res(false); });
+  $('#result').classList.remove('on');
+  if (again) runLesson(L.def); else menu();
+}
+
+// --- гардероб ---
+const ITEMS = [
+  ['cap', 'head', 'Кепка', 20], ['bow', 'head', 'Бантик', 25], ['tophat', 'head', 'Цилиндр', 45], ['wizard', 'head', 'Шляпа волшебника', 70], ['crown', 'head', 'Корона', 120],
+  ['glasses', 'eyes', 'Очки', 25], ['shades', 'eyes', 'Тёмные очки', 40],
+  ['bowtie', 'neck', 'Бабочка', 20], ['scarf', 'neck', 'Шарф', 30], ['medal', 'neck', 'Медаль', 80],
+  ['cape', 'back', 'Плащ героя', 60],
+  ['blue', 'skin', 'Синий Леон', 40], ['pink', 'skin', 'Розовый Леон', 40], ['rainbow', 'skin', 'Радужный Леон', 150],
+];
+function shop() {
+  show('shop');
+  const box = $('#items'); box.innerHTML = '';
+  ITEMS.forEach(([id, slot, name, price]) => {
+    const own = S.owned.includes(id), worn = S.wear[slot] === id;
+    const b = document.createElement('button');
+    b.className = 'item' + (own ? ' own' : '') + (worn ? ' on' : '') + (!own && S.coins < price ? ' poor' : '');
+    const w = slot === 'skin' ? { skin: id } : { skin: 'green', [slot]: id };
+    b.innerHTML = `<div class="pv">${leonSVG('neutral', w)}</div><b>${name}</b><span>${own ? (worn ? 'надето' : 'есть') : COIN + price}</span>`;
+    b.onclick = () => {
+      if (own) {
+        if (slot === 'skin') S.wear.skin = worn ? 'green' : id; else S.wear[slot] = worn ? null : id;
+        save(); setMood('happy', 'hop'); say(worn ? 'Сниму пока.' : pick(['Мне идёт?', 'Красота!', 'Вот так лучше!']));
+      } else if (S.coins >= price) {
+        S.coins -= price; S.owned.push(id);
+        if (slot === 'skin') S.wear.skin = id; else S.wear[slot] = id;
+        save(); sfx('win'); setMood('happy', 'hop'); say('Ура, обновка! Спасибо!');
+      } else {
+        const n = price - S.coins;
+        setMood('sad', 'sad'); say(`Нужно ещё ${n} ${coinsW(n)}. Пройди урок — и купим!`);
+      }
+      const y = window.scrollY; shop(); window.scrollTo(0, y);
+    };
+    box.appendChild(b);
+  });
+}
+
+// ===================== Террариум =====================
+const coinsW = n => n % 10 === 1 && n % 100 !== 11 ? 'монетка' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'монетки' : 'монеток';
+const centipedeSVG = (() => {
+  let legs = '', segs = '';
+  for (let i = 0; i < 8; i++) {
+    const x = 4 + i * 4, y = (21 + Math.sin(i * 1.1) * 1.6).toFixed(1);
+    legs += `<path d="M${x} ${y} L${x - 2} ${+y + 7} M${x} ${y} L${x - 2} ${y - 7}"/>`;
+    segs += `<circle cx="${x}" cy="${y}" r="3.3" fill="${i % 2 ? '#f0954f' : '#e07b39'}"/>`;
+  }
+  return `<svg viewBox="0 0 40 40"><g class="crawl"><g stroke="#8a4a1c" stroke-width="1.1" stroke-linecap="round">${legs}<path d="M37 17 Q38 11 40 9 M35 17 Q35 11 36 8" fill="none"/></g>${segs}<circle cx="36" cy="20" r="4" fill="#c9632a"/><circle cx="37.5" cy="18.8" r="1" fill="#fff"/></g></svg>`;
+})();
+// move: fly — летит и садится в воздухе, crawl — ползёт по песку, hop — прыгает, swim — падает в лужу
+const FOODS = {
+  ant: { name: 'Муравьишка', price: 3, move: 'crawl', say: 'Хрум! Муравьишка — хрустяшка!',
+    svg: `<svg viewBox="0 0 40 40"><g class="crawl"><g stroke="#3b2a1f" stroke-width="1.6" stroke-linecap="round" fill="none"><path d="M14 24 L9 31 M19 24 L19 32 M23 24 L28 31 M14 19 L9 13 M19 19 L19 12 M23 19 L28 13"/><path d="M33 16 Q36 10 39 10 M31 15 Q32 9 35 7"/></g><ellipse cx="10" cy="22" rx="7" ry="5.5" fill="#3b2a1f"/><circle cx="20" cy="21.5" r="4" fill="#4a3526"/><circle cx="30" cy="20" r="5" fill="#3b2a1f"/><circle cx="32" cy="18.5" r="1.4" fill="#fff"/></g></svg>` },
+  fly: { name: 'Муха', price: 3, move: 'fly', say: 'Ам! Муха — моя любимая!',
+    svg: `<svg viewBox="0 0 40 40"><g class="wing"><ellipse cx="13" cy="15" rx="8" ry="5" fill="#e3f6ff" stroke="#7ab" stroke-width="1.2" transform="rotate(-30 13 15)"/><ellipse cx="27" cy="15" rx="8" ry="5" fill="#e3f6ff" stroke="#7ab" stroke-width="1.2" transform="rotate(30 27 15)"/></g><ellipse cx="20" cy="24" rx="7.5" ry="9.5" fill="#33303f"/><circle cx="16.3" cy="18" r="3.2" fill="#d33"/><circle cx="23.7" cy="18" r="3.2" fill="#d33"/></svg>` },
+  grub: { name: 'Личинка', price: 3, move: 'crawl', say: 'Ням! Мягкая личинка!',
+    svg: `<svg viewBox="0 0 40 40"><g class="crawl"><path d="M28 12 C39 17 35 34 22 33 C12 32 8 25 13 20" stroke="#f3e1b6" stroke-width="10" fill="none" stroke-linecap="round"/><path d="M28 17 l4 -3 M32 24 l4 0 M29 30 l3 3 M22 29 l0 5 M16 26 l-4 3" stroke="#d8bf86" stroke-width="1.4" stroke-linecap="round"/><circle cx="13" cy="19" r="5" fill="#b5651d"/><circle cx="11.6" cy="17.8" r="1.2" fill="#222"/><path d="M10 22 l-2 2 M14 23.5 l0 2.5" stroke="#7a4214" stroke-width="1.2" stroke-linecap="round"/></g></svg>` },
+  worm: { name: 'Червячок', price: 4, move: 'crawl', say: 'Ням! Червячок вкусный!',
+    svg: `<svg viewBox="0 0 40 40"><path class="wiggle" d="M4 28 C10 18 16 34 22 26 C26 20 29 22 31 20" stroke="#ff9eb5" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="33" cy="19" r="5.5" fill="#ff9eb5"/><circle cx="34.6" cy="17.4" r="1.4" fill="#222"/><path d="M32 21.6 Q34 23.2 36.2 21.6" stroke="#c2577a" stroke-width="1.1" fill="none"/></svg>` },
+  beetle: { name: 'Жучок', price: 4, move: 'crawl', say: 'Хрум! Блестящий жучок!',
+    svg: `<svg viewBox="0 0 40 40"><g class="crawl"><g stroke="#2b2b2b" stroke-width="1.4" stroke-linecap="round" fill="none"><path d="M13 17 L7 13 M12 23 L6 23 M13 29 L7 33 M27 17 L33 13 M28 23 L34 23 M27 29 L33 33"/><path d="M17 9 Q15 4 12 3 M23 9 Q25 4 28 3"/></g><circle cx="20" cy="11" r="4.6" fill="#2e4a7a"/><ellipse cx="20" cy="24" rx="9.5" ry="11" fill="#3f6fb5"/><path d="M20 14 V35" stroke="#24406e" stroke-width="1.3"/><ellipse cx="16.5" cy="20" rx="2.2" ry="4.4" fill="#fff" opacity=".4"/><ellipse cx="23.5" cy="27" rx="1.4" ry="2.6" fill="#fff" opacity=".25"/></g></svg>` },
+  // божья коровка каждый раз решает сама: ползёт (перебирает лапками) или летит (машет крылышками)
+  bug: { name: 'Божья коровка', price: 5, move: 'either', say: 'Ням! Божья коровка!',
+    svgs: {
+      crawl: `<svg viewBox="0 0 40 40"><g class="legs" stroke="#222" stroke-width="1.6" stroke-linecap="round"><path d="M9 20 L4 17 M8 26 L3 26 M9 32 L4 35"/></g><g class="legs legs2" stroke="#222" stroke-width="1.6" stroke-linecap="round"><path d="M31 20 L36 17 M32 26 L37 26 M31 32 L36 35"/></g><path d="M16 9 Q14 4 10 4 M24 9 Q26 4 30 4" stroke="#222" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="20" cy="12" r="6" fill="#222"/><circle cx="17.5" cy="10.5" r="1.4" fill="#fff"/><circle cx="22.5" cy="10.5" r="1.4" fill="#fff"/><ellipse cx="20" cy="24" rx="13" ry="12" fill="#e53935"/><path d="M20 13 V36" stroke="#222" stroke-width="1.6"/><circle cx="14" cy="21" r="2.6" fill="#222"/><circle cx="26" cy="21" r="2.6" fill="#222"/><circle cx="15" cy="29" r="2.2" fill="#222"/><circle cx="25" cy="29" r="2.2" fill="#222"/><ellipse cx="15" cy="17" rx="3" ry="1.6" fill="#fff" opacity=".5"/></svg>`,
+      fly: `<svg viewBox="0 0 40 40"><g class="wing"><ellipse cx="9" cy="24" rx="9" ry="5" fill="#e3f6ff" stroke="#7ab" stroke-width="1" transform="rotate(25 9 24)" opacity=".9"/><ellipse cx="31" cy="24" rx="9" ry="5" fill="#e3f6ff" stroke="#7ab" stroke-width="1" transform="rotate(-25 31 24)" opacity=".9"/></g><path d="M16 9 Q14 4 10 4 M24 9 Q26 4 30 4" stroke="#222" stroke-width="1.6" fill="none" stroke-linecap="round"/><ellipse cx="20" cy="25" rx="5" ry="9" fill="#222"/><circle cx="20" cy="12" r="6" fill="#222"/><circle cx="17.5" cy="10.5" r="1.4" fill="#fff"/><circle cx="22.5" cy="10.5" r="1.4" fill="#fff"/><path d="M19 16 C10 16 6 24 9 32 C12 30 16 24 19 16Z" fill="#e53935"/><path d="M21 16 C30 16 34 24 31 32 C28 30 24 24 21 16Z" fill="#e53935"/><circle cx="13" cy="23" r="2.2" fill="#222"/><circle cx="27" cy="23" r="2.2" fill="#222"/><circle cx="11" cy="29" r="1.6" fill="#222"/><circle cx="29" cy="29" r="1.6" fill="#222"/></svg>`,
+    } },
+  cater: { name: 'Гусеница', price: 5, move: 'crawl', say: 'Ням! Гусеница — объеденье!',
+    svg: `<svg viewBox="0 0 40 40"><g class="crawl"><g fill="#4c7a22">${[7, 13, 19, 25].map(x => `<ellipse cx="${x}" cy="30.5" rx="1.7" ry="1.3"/>`).join('')}</g><circle cx="7" cy="27" r="5" fill="#8bd448"/><circle cx="13" cy="24.5" r="5.5" fill="#9be05a"/><circle cx="19" cy="23.5" r="5.5" fill="#8bd448"/><circle cx="25" cy="24.5" r="5.5" fill="#9be05a"/><circle cx="13" cy="22" r="1.3" fill="#ffd23f"/><circle cx="19" cy="21" r="1.3" fill="#ffd23f"/><circle cx="25" cy="22" r="1.3" fill="#ffd23f"/><circle cx="32" cy="21" r="6.5" fill="#8bd448"/><circle cx="30.5" cy="19.5" r="1.6" fill="#222"/><circle cx="34.5" cy="19.5" r="1.6" fill="#222"/><path d="M30.5 23.5 Q32.5 25.5 35 23.5" stroke="#2f5c12" stroke-width="1.1" fill="none"/><path d="M30 15 Q29 11 27 10 M34 15 Q35 11 37 10" stroke="#2f5c12" stroke-width="1.2" fill="none"/></g></svg>` },
+  centi: { name: 'Сороконожка', price: 6, move: 'crawl', say: 'Ого! Сороконожка! Все сорок ножек — мои!', svg: centipedeSVG },
+  hopper: { name: 'Кузнечик', price: 6, move: 'hop', say: 'Ам! Кузнечик — прыг, и ко мне!',
+    svg: `<svg viewBox="0 0 40 40"><path d="M14 24 L22 11 L29 26" stroke="#5a9c2e" stroke-width="2.6" fill="none" stroke-linejoin="round" stroke-linecap="round"/><ellipse cx="18" cy="25" rx="13" ry="5" fill="#7cc242"/><circle cx="31" cy="22" r="5" fill="#7cc242"/><circle cx="32.5" cy="20.5" r="1.6" fill="#222"/><path d="M33 17 Q36 8 40 7 M31 17 Q32 9 34 6" stroke="#5a9c2e" stroke-width="1.2" fill="none"/><path d="M12 29 L9 35 M20 29 L21 35" stroke="#5a9c2e" stroke-width="2" stroke-linecap="round"/></svg>` },
+  dragon: { name: 'Стрекоза', price: 7, move: 'fly', say: 'Ам! Стрекоза быстрая, а я быстрее!',
+    svg: `<svg viewBox="0 0 40 40"><g class="wing2"><ellipse cx="22" cy="12" rx="3.6" ry="10" fill="#d6f3ff" stroke="#7fbcd9" stroke-width="1" transform="rotate(-18 22 12)"/><ellipse cx="22" cy="28" rx="3.6" ry="10" fill="#d6f3ff" stroke="#7fbcd9" stroke-width="1" transform="rotate(18 22 28)"/><ellipse cx="15" cy="13" rx="3.2" ry="9" fill="#d6f3ff" stroke="#7fbcd9" stroke-width="1" transform="rotate(-38 15 13)"/><ellipse cx="15" cy="27" rx="3.2" ry="9" fill="#d6f3ff" stroke="#7fbcd9" stroke-width="1" transform="rotate(38 15 27)"/></g><path d="M3 20 H26" stroke="#2f8fd8" stroke-width="3.2" stroke-linecap="round"/><ellipse cx="28" cy="20" rx="4" ry="3.6" fill="#2f8fd8"/><circle cx="33" cy="17.5" r="2.9" fill="#1e5c99"/><circle cx="33" cy="22.5" r="2.9" fill="#1e5c99"/><circle cx="34" cy="17" r=".9" fill="#fff"/><circle cx="34" cy="22" r=".9" fill="#fff"/></svg>` },
+  fish: { name: 'Рыбка', price: 7, move: 'swim', say: 'Ням! Свежая рыбка из лужи!',
+    svg: `<svg viewBox="0 0 40 40"><g class="crawl"><path d="M9 20 L1 12 L2 28 Z" fill="#ff8c42"/><path d="M16 13 Q21 6 26 12 Z" fill="#ff8c42"/><ellipse cx="20" cy="20" rx="13" ry="8" fill="#ffa552"/><path d="M15 15 Q17.5 20 15 25 M19.5 14 Q22 20 19.5 26" stroke="#e8722c" stroke-width="1.3" fill="none"/><circle cx="28" cy="18" r="2.4" fill="#fff"/><circle cx="28.7" cy="18" r="1.3" fill="#222"/><path d="M31 22.5 Q33 23 34 21.5" stroke="#c45a1c" stroke-width="1.1" fill="none"/></g></svg>` },
+  butter: { name: 'Бабочка', price: 8, move: 'fly', say: 'Ням! Бабочка сладкая!',
+    svg: `<svg viewBox="0 0 40 40"><g class="wing"><path d="M20 19 C10 2 1 8 5 18 C1 27 9 33 20 22Z" fill="#ff8ad8" stroke="#c2408f" stroke-width="1.2"/><path d="M20 19 C30 2 39 8 35 18 C39 27 31 33 20 22Z" fill="#ff8ad8" stroke="#c2408f" stroke-width="1.2"/><circle cx="11" cy="13" r="2.4" fill="#ffe066"/><circle cx="29" cy="13" r="2.4" fill="#ffe066"/><circle cx="10" cy="24" r="1.8" fill="#8fd3ff"/><circle cx="30" cy="24" r="1.8" fill="#8fd3ff"/></g><ellipse cx="20" cy="21" rx="2.4" ry="9" fill="#4a3a2a"/><path d="M19 12 Q16 6 13 6 M21 12 Q24 6 27 6" stroke="#4a3a2a" stroke-width="1.3" fill="none"/></svg>` },
+  frog: { name: 'Лягушка', price: 12, move: 'hop', say: 'Ого! Целая лягушка! Я наелся!',
+    svg: `<svg viewBox="0 0 40 40"><ellipse cx="20" cy="27" rx="15" ry="10" fill="#6fcf5b"/><ellipse cx="20" cy="30" rx="9" ry="6" fill="#d9f7b0"/><circle cx="12" cy="16" r="6.5" fill="#6fcf5b"/><circle cx="28" cy="16" r="6.5" fill="#6fcf5b"/><circle cx="12" cy="16" r="4" fill="#fff"/><circle cx="28" cy="16" r="4" fill="#fff"/><circle cx="12.5" cy="16.5" r="2" fill="#222"/><circle cx="27.5" cy="16.5" r="2" fill="#222"/><path d="M13 25 Q20 30 27 25" stroke="#2f7d32" stroke-width="1.6" fill="none" stroke-linecap="round"/><ellipse cx="8" cy="35" rx="5" ry="2.5" fill="#5cb84a"/><ellipse cx="32" cy="35" rx="5" ry="2.5" fill="#5cb84a"/></svg>` },
+};
+const MALON_PRICE = 100;
+const MALON_SAY = ['Хрум! Это мне! Спасибо!', 'Ням! Малон доволен!', 'Хрум-хрум! Вкуснятина!', 'Я первый успел!'];
+const TB = { busy: false };
+const tEl = s => document.querySelector('#tbox ' + s);
+function sayMalon(t) {
+  const b = document.querySelector('.screen.on .bubble');
+  if (b) { b.textContent = t; b.dataset.say = t; }
+  speak(t, 'malon');
+}
+function spend(n) {
+  S.coins -= n; save(); updWallet(); sfx('coin');
+  const w = document.querySelector('.screen.on .wallet');
+  if (w) { const f = document.createElement('span'); f.className = 'float'; f.style.color = '#e5533d'; f.textContent = '−' + n; w.appendChild(f); setTimeout(() => f.remove(), 1100); }
+}
+function drawTerra(lm = 'neutral', mm = 'neutral', chew = '') {
+  const l = tEl('.tleon'), m = tEl('.tmalon');
+  l.innerHTML = leonSVG(lm, S.wear); l.firstChild.classList.add(chew === 'L' ? 'chew' : lm === 'happy' && !chew ? 'hop' : 'idle');
+  m.innerHTML = S.malon.owned ? geckoSVG(mm) : '';
+  if (m.firstChild) m.firstChild.classList.add(chew === 'M' ? 'chew' : 'idle');
+  m.classList.toggle('off', !malonOn());
+  $('#mtog').style.display = S.malon.owned ? '' : 'none';
+  $('#mtog').textContent = '🦎 Малон: ' + (S.malon.on ? 'дома' : 'гуляет');
+  $('#buyMalon').style.display = S.malon.owned ? 'none' : '';
+  $('#buyMalon').innerHTML = `🦎 Купить Малона ${COIN}${MALON_PRICE}`;
+}
+function renderFoods() {
+  $('#foods').innerHTML = Object.entries(FOODS).map(([k, f]) =>
+    `<button class="fd${S.coins < f.price ? ' poor' : ''}" data-f="${k}"><div class="ic">${f.svg || f.svgs.crawl}</div><b>${f.name}</b><span>${COIN}${f.price}</span></button>`).join('');
+  $('#foods').querySelectorAll('.fd').forEach(b => b.onclick = () => buyFood(b.dataset.f));
+}
+function terra() {
+  abortAll(); TAP = MOVE = null; L = null; actions([]);
+  try { speechSynthesis.cancel(); } catch (e) {}
+  show('terra'); drawTerra(); renderFoods();
+  say(malonOn() ? 'Мы с Малоном проголодались! Выбирай угощение в банке.' : 'Я проголодался! Выбирай угощение в банке.');
+}
+async function buyFood(k) {
+  const F = FOODS[k];
+  if (TB.busy) return;
+  if (S.coins < F.price) { const n = F.price - S.coins; drawTerra('sad'); say(`Нужно ещё ${n} ${coinsW(n)}. Пройди урок — и покормишь!`); return; }
+  spend(F.price); renderFoods();
+  await terraFeed(k);
+}
+function tween(ms, fn) {
+  return new Promise(res => {
+    const t0 = performance.now();
+    const step = now => { const t = Math.min(1, (now - t0) / ms); fn(t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2); if (t < 1) requestAnimationFrame(step); else res(); };
+    requestAnimationFrame(step);
+  });
+}
+const pause = ms => new Promise(r => setTimeout(r, ms));
+// букашка садится в случайное место; кто к ней ближе — тот и ест
+async function terraFeed(type) {
+  TB.busy = true;
+  const F0 = FOODS[type], mv0 = F0.move === 'either' ? (Math.random() < .5 ? 'fly' : 'crawl') : F0.move;
+  const box = $('#tbox'), F = F0.svgs ? { ...F0, move: mv0, svg: F0.svgs[mv0] } : F0, W = box.clientWidth, H = box.clientHeight;
+  const leon = tEl('.tleon'), malon = tEl('.tmalon'), tg = tEl('.tongue');
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const px = W * .47, py = H * .887, prx = W * .157;  // лужа
+  let lx, ly;
+  if (F.move === 'fly') { lx = rnd(W * .12, W * .88); ly = rnd(H * .14, H * .55); }
+  else if (F.move === 'swim') { lx = px + rnd(-prx * .45, prx * .45); ly = py; }
+  else { lx = Math.random() < .5 ? rnd(W * .08, px - prx - 14) : rnd(px + prx + 14, W * .9); ly = rnd(H * .8, H * .92); }
+  const rel = (el, kx, ky) => { const r = el.getBoundingClientRect(), s = box.getBoundingClientRect(); return [r.left - s.left - box.clientLeft + r.width * kx, r.top - s.top - box.clientTop + r.height * ky]; };
+  const [mx, my] = rel(leon, .5, .62), [gx, gy] = rel(malon, .5, .6);
+  const who = malonOn() && Math.hypot(lx - gx, ly - gy) < Math.hypot(lx - mx, ly - my) ? 'malon' : 'leon';
+  const f = document.createElement('div'); f.className = 'food'; f.innerHTML = F.svg;
+  const at = (x, y, s = 1, fl = false) => `translate(${x - 22}px, ${y - 22}px) scale(${fl ? -s : s}, ${s})`;
+  const fromLeft = Math.random() < .5, sx = fromLeft ? -30 : W + 30, flip = !fromLeft;
+  const sy = F.move === 'fly' ? rnd(10, H * .4) : ly;
+  const frames = F.move === 'swim'
+    ? [{ transform: at(W * .55, -30, .8, flip) }, { transform: at(lx + 20, H * .45, 1, flip), offset: .55 }, { transform: at(lx, ly, 1, flip) }]
+    : F.move === 'hop'
+      ? [{ transform: at(sx, sy, 1, flip) }, { transform: at((sx + lx) / 2, sy - 60, 1, flip) }, { transform: at(lx, ly, 1, flip) }]
+      : F.move === 'fly'
+        ? [{ transform: at(sx, sy, 1, flip) }, { transform: at((sx + lx) / 2, rnd(10, H * .3), 1, flip) }, { transform: at(lx + (fromLeft ? -20 : 20), ly - 20, 1, flip) }, { transform: at(lx, ly, 1, flip) }]
+        : [{ transform: at(sx, sy, 1, flip) }, { transform: at(lx, ly, 1, flip) }];
+  f.style.transform = at(lx, ly, 1, flip);
+  box.appendChild(f);
+  await f.animate(frames, { duration: F.move === 'crawl' ? 1400 : 1000, easing: F.move === 'swim' ? 'ease-in' : 'ease-out' }).finished;
+  if (F.move === 'swim') {
+    sfx('move');
+    for (let i = 0; i < 3; i++) setTimeout(() => {
+      const r = document.createElement('div'); r.className = 'ripple';
+      r.style.left = lx - 12 + 'px'; r.style.top = ly - 4 + 'px'; box.appendChild(r); setTimeout(() => r.remove(), 900);
+    }, i * 220);
+    await f.animate([{ transform: at(lx, ly, 1, flip) }, { transform: at(lx - 14, ly + 2, 1, false) }, { transform: at(lx + 14, ly, 1, true) }, { transform: at(lx, ly, 1, flip) }], { duration: 1100 }).finished;
+  }
+  await pause(200);
+  const heart = (x, y) => { const h = document.createElement('div'); h.className = 'heart'; h.textContent = '❤️'; h.style.left = x - 11 + 'px'; h.style.top = y - 24 + 'px'; box.appendChild(h); setTimeout(() => h.remove(), 1200); };
+  if (who === 'leon') {
+    drawTerra('happy', 'neutral', 'T');
+    tg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    tg.innerHTML = `<line stroke="#ff6f91" stroke-width="8" stroke-linecap="round" x1="${mx}" y1="${my}" x2="${mx}" y2="${my}"/><circle r="8.5" fill="#e8456f" cx="${mx}" cy="${my}"/>`;
+    const line = tg.firstChild, tip = tg.lastChild;
+    const set = (x, y) => { line.setAttribute('x2', x); line.setAttribute('y2', y); tip.setAttribute('cx', x); tip.setAttribute('cy', y); };
+    await tween(170, t => set(mx + (lx - mx) * t, my + (ly - my) * t));
+    await tween(280, t => { const x = lx + (mx - lx) * t, y = ly + (my - ly) * t; set(x, y); f.style.transform = at(x, y, 1 - .6 * t, flip); });
+    tg.innerHTML = ''; f.remove();
+    sfx('chomp'); drawTerra('happy', 'neutral', 'L'); heart(mx, my - 50);
+    say(F.say);
+  } else {
+    const dx = lx - gx, dy = ly - gy;
+    drawTerra('neutral', 'happy');
+    await malon.animate([{ transform: 'translate(0,0)' }, { transform: `translate(${dx * .5}px, ${dy * .5 - 50}px)` }, { transform: `translate(${dx}px, ${dy}px)` }], { duration: 380, easing: 'ease-out' }).finished;
+    f.remove(); sfx('chomp');
+    await malon.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: `translate(${dx * .5}px, ${dy * .5 - 40}px)` }, { transform: 'translate(0,0)' }], { duration: 420, easing: 'ease-in' }).finished;
+    drawTerra('neutral', 'happy', 'M'); heart(gx, gy - 46);
+    sayMalon(pick(MALON_SAY));
+  }
+  setTimeout(() => { if (!TB.busy && document.querySelector('#terra.on')) drawTerra(); }, 1800);
+  await pause(450);
+  TB.busy = false;
+}
+$('#buyMalon').onclick = () => {
+  if (TB.busy) return;
+  if (S.coins < MALON_PRICE) { const n = MALON_PRICE - S.coins; say(`Малон стоит ${MALON_PRICE} монеток. Нужно ещё ${n} ${coinsW(n)} — пройди уроки!`); return; }
+  spend(MALON_PRICE); S.malon = { owned: true, on: true }; save();
+  sfx('win'); drawTerra('happy', 'happy');
+  sayMalon('Привет! Я Малон, друг Леона! Теперь я живу здесь.');
+};
+$('#mtog').onclick = () => {
+  if (TB.busy) return;
+  S.malon.on = !S.malon.on; save(); drawTerra();
+  if (S.malon.on) sayMalon('Я вернулся! Буду рядом с Леоном.'); else say('Малон ушёл гулять. Вернётся, когда позовёшь.');
+};
+$('#toTerra').onclick = () => { sfx('tap'); terra(); };
+$('#terraBack').onclick = () => { sfx('tap'); menu(); };
+
+$('#back').onclick = () => { sfx('tap'); menu(); };
+$('#toShop').onclick = () => { sfx('tap'); shop(); say('Это мой гардероб! Выбирай, что мне надеть.'); };
+$('#shopBack').onclick = () => { sfx('tap'); menu(); };
+$('#snd').onclick = () => { S.sound = !S.sound; save(); $('#snd').textContent = S.sound ? '🔊' : '🔇'; if (!S.sound) try { speechSynthesis.cancel(); } catch (e) {} };
+$('#voiceBtn').onclick = () => {
+  pickVoice();
+  VAR = VARS[(VARS.indexOf(VAR) + 1) % VARS.length];
+  S.voice = VAR.label; save();
+  $('#voiceBtn').textContent = '🗣 Голос: ' + VAR.label;
+  say('Привет! Я Леон. Так звучит мой голос.');
+};
+$('#reset').onclick = () => {
+  if (!confirm('Сбросить монетки, звёзды, покупки и Малона?')) return;
+  Object.assign(S, { coins: 10, owned: [], wear: { skin: 'green' }, stars: {}, malon: { owned: false, on: true } }); save(); shop();
+};
+$('#snd').textContent = S.sound ? '🔊' : '🔇';
+menu();
+</script>
+</body>
+</html>

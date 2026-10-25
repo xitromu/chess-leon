@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Лапки и террариум — макет</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, "Segoe UI", Roboto, sans-serif; background: #e9ecef; color: #3d2f7a; }
+  h1 { text-align: center; font-size: 20px; margin: 16px 8px 4px; }
+  h2 { text-align: center; font-size: 18px; margin: 22px 8px 4px; }
+  .note { text-align: center; font-size: 14px; color: #555; margin: 0 12px 10px; }
+  .row { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; padding: 0 8px 14px; }
+  .btn { border: 0; border-radius: 14px; padding: 8px 12px; font-weight: 800; font-size: 14px; cursor: pointer; background: #efeaff; color: #3d2f7a; }
+  .btn.main { background: #6c5ce7; color: #fff; }
+  .pcard { background: #fff; border-radius: 20px; padding: 10px; width: 300px; text-align: center; box-shadow: 0 3px 10px #0001; }
+  .pcard.sel { outline: 4px solid #ffb300; }
+  .pcard h3 { margin: 4px 0 2px; font-size: 17px; }
+  .pcard p { margin: 0 0 6px; font-size: 13px; color: #555; min-height: 34px; }
+  .pair { position: relative; height: 170px; background: linear-gradient(#f3efff, #e3f4ff); border-radius: 16px; }
+  .pair .lv { position: absolute; left: 14px; bottom: 4px; width: 150px; height: 150px; }
+  .pair .mv { position: absolute; right: 14px; bottom: 4px; width: 100px; height: 100px; }
+  .acts { display: flex; gap: 6px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
+  svg { overflow: visible; }
+  .lv svg, .mv svg, .leon svg, .malon svg, .food svg, .fd .ic svg { width: 100%; height: 100%; display: block; }
+
+  .foodrow { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 0 8px 10px; max-width: 760px; margin: 0 auto; }
+  .fchip { background: #fff; border-radius: 14px; padding: 6px; width: 84px; text-align: center; font-size: 12px; font-weight: 700; }
+  .fchip .ic { width: 46px; height: 46px; margin: 0 auto 2px; }
+  .fchip.new { outline: 3px solid #42c860; }
+
+  .phone { width: 360px; min-height: 720px; border-radius: 28px; overflow: hidden; border: 6px solid #222; background: linear-gradient(#e6dcff, #bfe3ff); position: relative; margin: 0 auto 30px; }
+  .top { display: flex; align-items: center; gap: 8px; padding: 10px 12px 4px; font-weight: 800; }
+  .top .ttl { flex: 1; text-align: center; font-size: 16px; }
+  .ib { background: #fff; border-radius: 12px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex: none; }
+  .wallet { background: #fff; border-radius: 18px; padding: 4px 10px 4px 6px; display: flex; align-items: center; gap: 4px; font-size: 17px; position: relative; flex: none; }
+  .wallet svg { width: 22px; height: 22px; }
+  .float { position: absolute; right: 4px; top: -4px; color: #e5533d; font-weight: 900; animation: up 1s ease-out forwards; }
+  @keyframes up { to { transform: translateY(-30px); opacity: 0; } }
+  .terra { margin: 6px 10px; height: 330px; border-radius: 22px; border: 6px solid #cfe9ff; background: linear-gradient(#e2f8dc, #c4ecb6 74%, #e8d29a 74%); box-shadow: inset 0 0 0 2px #fff8, 0 4px 12px #0002; overflow: hidden; position: relative; }
+  .terra .decor { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .terra .leon { position: absolute; left: 2%; bottom: calc(31% - 10px); width: 150px; height: 150px; z-index: 2; }
+  .terra .malon { position: absolute; right: 5%; bottom: 9%; width: 96px; height: 96px; z-index: 2; transition: opacity .3s; }
+  .terra .malon.off { opacity: 0; }
+  .terra svg.tongue { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+  .terra .food { position: absolute; left: 0; top: 0; width: 44px; height: 44px; z-index: 4; pointer-events: none; }
+  .terra .bubble { position: absolute; left: 40%; top: 8px; max-width: 56%; background: #fff; border-radius: 14px; padding: 6px 10px; font-size: 14px; font-weight: 700; box-shadow: 0 2px 6px #0002; z-index: 6; }
+  .mtog { position: absolute; right: 8px; bottom: calc(9% + 100px); border: 0; border-radius: 12px; padding: 4px 8px; font-size: 12px; font-weight: 800; background: #fff; cursor: pointer; z-index: 6; box-shadow: 0 2px 6px #0002; }
+  .chew { animation: chew .16s ease-in-out 4; transform-origin: 50% 100%; }
+  @keyframes chew { 50% { transform: scale(1.05, .92); } }
+  .idle { animation: breathe 3s ease-in-out infinite; transform-origin: 50% 100%; }
+  @keyframes breathe { 50% { transform: scale(1.025, .985); } }
+  .heart { position: absolute; font-size: 22px; animation: heart 1.2s ease-out forwards; z-index: 6; pointer-events: none; }
+  @keyframes heart { to { transform: translateY(-60px) scale(1.4); opacity: 0; } }
+  .wing { animation: flap .14s ease-in-out infinite alternate; transform-origin: 20px 20px; }
+  @keyframes flap { to { transform: scaleX(.3); } }
+  .wing2 { animation: flap2 .09s ease-in-out infinite alternate; transform-origin: 20px 20px; }
+  @keyframes flap2 { to { transform: scaleY(.45); } }
+  .wiggle { animation: wig .3s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 50%; }
+  @keyframes wig { to { transform: scaleX(.85) skewX(10deg); } }
+  .crawl { animation: crawl .35s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 100%; }
+  @keyframes crawl { to { transform: scaleX(.9) translateY(-4%); } }
+  .ripple { position: absolute; width: 24px; height: 8px; border: 2px solid #fff; border-radius: 50%; z-index: 3; pointer-events: none; animation: ripple .9s ease-out forwards; }
+  @keyframes ripple { to { transform: scale(3.2); opacity: 0; } }
+  .jar { margin: 8px 12px; background: #fff; border-radius: 20px; padding: 6px 6px 8px; }
+  .jar h4 { margin: 2px 0 4px; text-align: center; font-size: 13px; }
+  .foods { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 2px 4px; }
+  .fd { background: #f5f2ff; border: 0; border-radius: 14px; padding: 5px 2px; cursor: pointer; color: inherit; font: inherit; }
+  .fd:active { transform: scale(.95); }
+  .fd .ic { width: 38px; height: 38px; margin: 0 auto; }
+  .fd b { font-size: 11px; line-height: 1.1; min-height: 24px; display: flex; align-items: center; justify-content: center; }
+  .fd span { font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 2px; }
+  .fd span svg { width: 13px; height: 13px; }
+</style>
+</head>
+<body>
+<h1>Лапки, новая еда и террариум — макет</h1>
+
+<h2>1. Передние лапки — 3 варианта</h2>
+<p class="note">Нажимайте «Радость» и «Грусть», чтобы увидеть, как лапки двигаются. Выбранный вариант появится в террариуме ниже.</p>
+<div class="row" id="paws"></div>
+
+<h2>2. Еда: 13 видов (новые — в зелёной рамке)</h2>
+<div class="foodrow" id="foodrow"></div>
+
+<h2>3. Террариум</h2>
+<p class="note">Букашка садится в случайное место, рыбку бросаем в лужу. Кто ближе — тот и съест: Леон достаёт языком, Малон подпрыгивает. Если Малон гуляет — всё достаётся Леону.</p>
+<div class="phone">
+  <div class="top"><div class="ib">←</div><div class="ttl">Террариум</div><div class="wallet" id="wallet"></div></div>
+  <div class="terra" id="terra">
+    <svg class="decor" viewBox="0 0 300 300" preserveAspectRatio="none">
+      <circle cx="268" cy="34" r="18" fill="#fff7c2" opacity=".85"/>
+      <path d="M-4 212 Q90 194 186 210" stroke="#8a5a2b" stroke-width="11" fill="none" stroke-linecap="round"/>
+      <path d="M150 204 Q170 186 182 170" stroke="#8a5a2b" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <ellipse cx="182" cy="166" rx="12" ry="6" fill="#3fa34d" transform="rotate(-40 182 166)"/>
+      <ellipse cx="26" cy="200" rx="14" ry="7" fill="#3fa34d" transform="rotate(-25 26 200)"/>
+      <ellipse cx="246" cy="283" rx="58" ry="22" fill="#a8a29a"/><ellipse cx="236" cy="276" rx="34" ry="9" fill="#c4bdb4"/>
+      <path d="M10 300 Q20 250 14 226 M26 300 Q38 258 48 240 M292 300 Q284 252 294 228" stroke="#4caf50" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <circle cx="120" cy="290" r="5" fill="#d9c27e"/><circle cx="168" cy="294" r="4" fill="#d9c27e"/><circle cx="60" cy="292" r="3" fill="#d9c27e"/>
+      <ellipse cx="141" cy="266" rx="52" ry="14" fill="#9ad8f5"/>
+      <ellipse cx="141" cy="267" rx="47" ry="11" fill="#5fb8ea"/>
+      <ellipse cx="128" cy="263" rx="16" ry="3" fill="#fff" opacity=".45"/>
+      <circle cx="88" cy="270" r="4" fill="#b9b2a8"/><circle cx="194" cy="262" r="3.5" fill="#b9b2a8"/><circle cx="182" cy="275" r="3" fill="#a8a29a"/>
+    </svg>
+    <div class="leon"></div><div class="malon"></div><svg class="tongue"></svg>
+    <div class="bubble" id="bubble">Привет! Мы проголодались!</div>
+    <button class="mtog" id="mtog">🦎 Малон: дома</button>
+  </div>
+  <div class="jar"><h4>🫙 Банка с едой — нажми, и букашка выбежит</h4><div class="foods" id="foods"></div></div>
+</div>
+
+<script>
+// ---------- лапки ----------
+let PAW = 'p3';
+const PAWS = {
+  p1: { name: 'Стоят на лапках', desc: 'Передние лапки опираются о землю, как у настоящих ящериц.' },
+  p2: { name: 'Ручки по бокам', desc: 'Лапки по бокам, как у мягкой игрушки. Не двигаются.' },
+  p3: { name: 'Живые лапки', desc: 'Обычно по бокам. Радуются — поднимают лапки, грустят — прижимают к себе.' },
+};
+const pose = (style, mood) => style === 'p1' ? 'stand' : style === 'p3' ? (mood === 'happy' ? 'up' : mood === 'sad' ? 'hug' : 'side') : 'side';
+const mitten = (x, y, a, col) => `<g transform="translate(${x} ${y}) rotate(${a})"><ellipse cx="-3.8" cy="0" rx="5.4" ry="4.6" fill="${col}"/><ellipse cx="3.8" cy="0" rx="5.4" ry="4.6" fill="${col}"/></g>`;
+function leonArms(style, mood, B, dark) {
+  const arm = (x1, y1, x2, y2, a) => `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${B}" stroke-width="12" stroke-linecap="round"/>` + mitten(x2, y2 + 2, a, dark);
+  const p = pose(style, mood);
+  if (p === 'stand') return arm(84, 160, 82, 186, 0) + arm(116, 160, 118, 186, 0);
+  if (p === 'up') return arm(70, 150, 40, 118, 145) + arm(130, 150, 160, 118, -145);
+  if (p === 'hug') return arm(68, 152, 90, 170, -25) + arm(132, 152, 110, 170, 25);
+  return arm(66, 152, 52, 174, 15) + arm(134, 152, 148, 174, -15);
+}
+const toes = (x, y, a, c) => `<g transform="translate(${x} ${y}) rotate(${a})">` + [-5.5, 0, 5.5].map(t => `<circle cx="${t}" cy="${t ? 2.5 : 4}" r="3.3" fill="${c.body}" stroke="${c.dark}" stroke-width="1.2"/>`).join('') + '</g>';
+function malonArms(style, mood, c) {
+  const arm = (x1, y1, x2, y2, a) => `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${c.body}" stroke-width="9" stroke-linecap="round"/>` + toes(x2, y2 + 1, a, c);
+  const p = pose(style, mood);
+  if (p === 'stand') return arm(58, 116, 30, 136, 30) + arm(102, 116, 130, 136, -30);
+  if (p === 'up') return arm(54, 112, 18, 82, 150) + arm(106, 112, 142, 82, -150);
+  if (p === 'hug') return arm(56, 116, 72, 134, -20) + arm(104, 116, 88, 134, 20);
+  return arm(54, 114, 42, 140, 10) + arm(106, 114, 118, 140, -10);
+}
+
+// ---------- Леон ----------
+const SKIN = { n: ['#6ccc5c', '#358f42', '#dcf7a4'], h: ['#7bd96a', '#3c9c4a', '#e6ffb0'] }, SAD = ['#a2a9d6', '#6c73a8', '#dfe2f5'];
+let LID = 0;
+function leonSVG(mood, style = PAW) {
+  const id = 'lg' + (++LID);
+  const [B, dark, belly] = mood === 'sad' ? SAD : SKIN[mood === 'happy' ? 'h' : 'n'];
+  const sad = mood === 'sad', happy = mood === 'happy';
+  const mouth = sad ? 'M78 130 Q100 116 122 130' : happy ? 'M68 116 Q100 148 132 116 Q100 132 68 116Z' : 'M74 120 Q100 134 126 120';
+  const px = sad ? 0 : 4, py = sad ? 5 : 0, pr = happy ? 7.5 : 6.5;
+  const backFeet = style === 'p1'
+    ? `<ellipse cx="64" cy="184" rx="13" ry="7" fill="${dark}"/><ellipse cx="136" cy="184" rx="13" ry="7" fill="${dark}"/>` : '';
+  return `<svg viewBox="0 0 200 200"><defs><radialGradient id="${id}g" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>
+    <path d="M136 168 C176 172 186 140 166 130 C150 122 140 140 152 146" stroke="${B}" stroke-width="13" fill="none" stroke-linecap="round"/>
+    ${backFeet}
+    <ellipse cx="100" cy="160" rx="40" ry="30" fill="${B}"/><ellipse cx="100" cy="166" rx="24" ry="18" fill="${belly}"/>
+    ${style === 'p1' ? '' : `<ellipse cx="78" cy="188" rx="13" ry="7" fill="${dark}"/><ellipse cx="122" cy="188" rx="13" ry="7" fill="${dark}"/>`}
+    <path d="M62 62 Q100 4 138 62Z" fill="${dark}"/>
+    <ellipse cx="100" cy="92" rx="64" ry="52" fill="${B}"/><ellipse cx="100" cy="92" rx="64" ry="52" fill="url(#${id}g)"/>
+    <circle cx="100" cy="58" r="5" fill="${dark}" opacity=".35"/><circle cx="84" cy="66" r="4" fill="${dark}" opacity=".35"/><circle cx="116" cy="66" r="4" fill="${dark}" opacity=".35"/>
+    <circle cx="54" cy="90" r="24" fill="${B}" stroke="${dark}" stroke-width="3"/><circle cx="146" cy="90" r="24" fill="${B}" stroke="${dark}" stroke-width="3"/>
+    <circle cx="56" cy="90" r="14" fill="#fff"/><circle cx="144" cy="90" r="14" fill="#fff"/>
+    <circle cx="${56 + px}" cy="${90 + py}" r="${pr}" fill="#222"/><circle cx="${144 - px}" cy="${90 + py}" r="${pr}" fill="#222"/>
+    <circle cx="${58 + px}" cy="${87 + py}" r="2.2" fill="#fff"/><circle cx="${146 - px}" cy="${87 + py}" r="2.2" fill="#fff"/>
+    ${sad ? `<path d="M38 74 Q54 66 70 76 M130 76 Q146 66 162 74" stroke="${dark}" stroke-width="4" fill="none" stroke-linecap="round"/>` : ''}
+    <path d="${mouth}" stroke="${dark}" stroke-width="4" fill="${happy ? '#d84a5f' : 'none'}" stroke-linecap="round" stroke-linejoin="round"/>
+    ${sad ? `<path d="M40 112 Q36 122 40 127 Q45 122 40 112Z" fill="#6ec6ff"/>` : `<circle cx="70" cy="116" r="7" fill="#ff8fa3" opacity=".6"/><circle cx="130" cy="116" r="7" fill="#ff8fa3" opacity=".6"/>`}
+    ${leonArms(style, mood, B, dark)}</svg>`;
+}
+
+// ---------- Малон (леопардовый) ----------
+const MAL = { body: '#ffd166', dark: '#8a5a19', belly: '#fff4d6', spot: '#7a4e22', eye: '#f2b33d' };
+const MAL_SAD = { body: '#d9cfa8', dark: '#7d6f4c', belly: '#f3efe0', spot: '#8c7b5c', eye: '#c9b98a' };
+function geckoSVG(mood, style = PAW) {
+  const c = mood === 'sad' ? MAL_SAD : MAL, happy = mood === 'happy', sad = mood === 'sad';
+  const foot = x => `<g transform="translate(${x} 150)"><ellipse rx="9" ry="6" fill="${c.body}"/>${[-7, 0, 7].map(t => `<circle cx="${t}" cy="${t ? 4.5 : 6.5}" r="3.4" fill="${c.body}" stroke="${c.dark}" stroke-width="1.2"/>`).join('')}</g>`;
+  const eye = x => happy
+    ? `<circle cx="${x}" cy="62" r="17" fill="${c.body}" stroke="${c.dark}" stroke-width="2.5"/><path d="M${x - 9} 65 Q${x} 54 ${x + 9} 65" stroke="#222" stroke-width="4" fill="none" stroke-linecap="round"/>`
+    : `<circle cx="${x}" cy="62" r="17" fill="${c.body}" stroke="${c.dark}" stroke-width="2.5"/><circle cx="${x}" cy="${sad ? 65 : 62}" r="13" fill="${c.eye}"/><ellipse cx="${x}" cy="${sad ? 66 : 62}" rx="3.5" ry="10" fill="#222"/><circle cx="${x + 4}" cy="57" r="2.4" fill="#fff"/>`;
+  const spots = [[52, 96], [64, 46], [96, 44], [110, 96], [70, 120], [92, 128], [60, 132], [100, 114], [132, 128], [146, 110]];
+  let s = `<svg viewBox="0 0 160 160">
+    <path d="M104 132 C140 142 158 118 144 102 C134 94 122 104 130 112" stroke="${c.body}" stroke-width="16" fill="none" stroke-linecap="round"/>
+    ${foot(60)}${foot(100)}
+    <ellipse cx="80" cy="124" rx="32" ry="24" fill="${c.body}"/><ellipse cx="80" cy="131" rx="19" ry="13" fill="${c.belly}"/>
+    <ellipse cx="80" cy="78" rx="56" ry="40" fill="${c.body}"/>`;
+  s += spots.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3.6" fill="${c.spot}" opacity=".85"/>`).join('');
+  s += eye(50) + eye(110);
+  if (sad) s += `<path d="M34 46 Q50 40 64 48 M96 48 Q110 40 126 46" stroke="${c.dark}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+  s += `<circle cx="73" cy="80" r="1.9" fill="${c.dark}"/><circle cx="87" cy="80" r="1.9" fill="${c.dark}"/>`;
+  s += happy ? `<path d="M44 90 Q80 124 116 90 Q80 104 44 90Z" fill="#e8566f" stroke="${c.dark}" stroke-width="3" stroke-linejoin="round"/>`
+     : sad ? `<path d="M56 102 Q80 88 104 102" stroke="${c.dark}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`
+           : `<path d="M44 90 Q80 110 116 90" stroke="${c.dark}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+  if (!sad) s += `<circle cx="38" cy="92" r="6" fill="#ff8fa3" opacity=".55"/><circle cx="122" cy="92" r="6" fill="#ff8fa3" opacity=".55"/>`;
+  s += malonArms(style, mood, c);
+  return s + '</svg>';
+}
+
+// ---------- еда ----------
+const COIN = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.5" fill="#ffc93c" stroke="#d99a00" stroke-width="2"/><path d="M12 7.2 L13.4 10.4 L16.8 10.6 L14.2 12.8 L15 16.2 L12 14.4 L9 16.2 L9.8 12.8 L7.2 10.6 L10.6 10.4Z" fill="#e3a000"/></svg>`;
+const centipede = (() => {
+  let legs = '', segs = '';
+  for (let i = 0; i < 8; i++) {
+    const x = 4 + i * 4, y = 21 + Math.sin(i * 1.1) * 1.6;
+    legs += `<path d="M${x} ${y} L${x - 2} ${y + 7} M${x} ${y} L${x - 2} ${y - 7}"/>`;
+    segs += `<circle cx="${x}" cy="${y}" r="3.3" fill="${i % 2 ? '#f0954f' : '#e07b39'}"/>`;
+  }
+  return `<svg viewBox="0 0 40 40"><g class="crawl"><g stroke="#8a4a1c" stroke-width="1.1" stroke-linecap="round">${legs}<path d="M37 17 Q38 11 40 9 M35 17 Q35 11 36 8" fill="none"/></g>${segs}<circle cx="36" cy="20" r="4" fill="#c9632a"/><circle cx="37.5" cy="18.8" r="1" fill="#fff"/></g></svg>`;
+})();
+const FOODS = {
+  ant: { name: 'Муравьишка', price: 3, move: 'crawl', say: 'Хрум! Муравьишка — хрустяшка!',
+    svg: `<svg viewBox="0 0 40 40"><g class="crawl"><g stroke="#3b2a1f" stroke-width="1.6" stroke-linecap="round" fill="none"><path d="M14 24 L9 31 M19 24 L19 32 M23 24 L28 31 M14 19 L9 13 M19 19 L19 12 M23 19 L28 13"/><path d="M33 16 Q36 10 39 10 M31 15 Q32 9 35 7"/></g><ellipse cx="10" cy="22" rx="7" ry="5.5" fill="#3b2a1f"/><circle cx="20" cy="21.5" r="4" fill="#4a3526"/><circle cx="30" cy="20" r="5" fill="#3b2a1f"/><circle cx="32" cy="18.5" r="1.4" fill="#fff"/></g></svg>` },
+  fly: { name: 'Муха', price: 3, move: 'fly', say: 'Ам! Муха — моя любимая!',
+    svg: `<svg viewBox="0 0 40 40"><g class="wing"><ellipse cx="13" cy="15" rx="8" ry="5" fill="#e3f6ff" stroke="#7ab" stroke-width="1.2" transform="rotate(-30 13 15)"/><ellipse cx="27" cy="15" rx="8" ry="5" fill="#e3f6ff" stroke="#7ab" stroke-width="1.2" transform="rotate(30 27 15)"/></g><ellipse cx="20" cy="24" rx="7.5" ry="9.5" fill="#33303f"/><circle cx="16.3" cy="18" r="3.2" fill="#d33"/><circle cx="23.7" cy="18" r="3.2" fill="#d33"/></svg>` },
+  grub: { name: 'Личинка', price: 3, move: 'crawl', isNew: true, say: 'Ням! Мягкая личинка!',
+    svg: `<svg viewBox="0 0 40 40"><g class="crawl"><path d="M28 12 C39 17 35 34 22 33 C12 32 8 25 13 20" stroke="#f3e1b6" stroke-width="10" fill="none" stroke-linecap="round"/><path d="M28 17 l4 -3 M32 24 l4 0 M29 30 l3 3 M22 29 l0 5 M16 26 l-4 3" stroke="#d8bf86" stroke-width="1.4" stroke-linecap="round"/><circle cx="13" cy="19" r="5" fill="#b5651d"/><circle cx="11.6" cy="17.8" r="1.2" fill="#222"/><path d="M10 22 l-2 2 M14 23.5 l0 2.5" stroke="#7a4214" stroke-width="1.2" stroke-linecap="round"/></g></svg>` },
+  worm: { name: 'Червячок', price: 4, move: 'crawl', say: 'Ням! Червячок вкусный!',
+    svg: `<svg viewBox="0 0 40 40"><path class="wiggle" d="M4 28 C10 18 16 34 22 26 C26 20 29 22 31 20" stroke="#ff9eb5" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="33" cy="19" r="5.5" fill="#ff9eb5"/><circle cx="34.6" cy="17.4" r="1.4" fill="#222"/><path d="M32 21.6 Q34 23.2 36.2 21.6" stroke="#c2577a" stroke-width="1.1" fill="none"/></svg>` },
+  beetle: { name: 'Жучок', price: 4, move: 'crawl', isNew: true, say: 'Хрум! Блестящий жучок!',
+    svg: `<svg viewBox="0 0 40 40"><g class="crawl"><g stroke="#2b2b2b" stroke-width="1.4" stroke-linecap="round" fill="none"><path d="M13 17 L7 13 M12 23 L6 23 M13 29 L7 33 M27 17 L33 13 M28 23 L34 23 M27 29 L33 33"/><path d="M17 9 Q15 4 12 3 M23 9 Q25 4 28 3"/></g><circle cx="20" cy="11" r="4.6" fill="#2e4a7a"/><ellipse cx="20" cy="24" rx="9.5" ry="11" fill="#3f6fb5"/><path d="M20 14 V35" stroke="#24406e" stroke-width="1.3"/><ellipse cx="16.5" cy="20" rx="2.2" ry="4.4" fill="#fff" opacity=".4"/><ellipse cx="23.5" cy="27" rx="1.4" ry="2.6" fill="#fff" opacity=".25"/></g></svg>` },
+  bug: { name: 'Божья коровка', price: 5, move: 'fly', say: 'Ням! Божья коровка!',
+    svg: `<svg viewBox="0 0 40 40"><path d="M16 9 Q14 4 10 4 M24 9 Q26 4 30 4" stroke="#222" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="20" cy="12" r="6" fill="#222"/><circle cx="17.5" cy="10.5" r="1.4" fill="#fff"/><circle cx="22.5" cy="10.5" r="1.4" fill="#fff"/><ellipse cx="20" cy="24" rx="13" ry="12" fill="#e53935"/><path d="M20 13 V36" stroke="#222" stroke-width="1.6"/><circle cx="14" cy="21" r="2.6" fill="#222"/><circle cx="26" cy="21" r="2.6" fill="#222"/><circle cx="15" cy="29" r="2.2" fill="#222"/><circle cx="25" cy="29" r="2.2" fill="#222"/><ellipse cx="15" cy="17" rx="3" ry="1.6" fill="#fff" opacity=".5"/></svg>` },
+  cater: { name: 'Гусеница', price: 5, move: 'crawl', isNew: true, say: 'Ням! Гусеница — объеденье!',
+    svg: `<svg viewBox="0 0 40 40"><g class="crawl"><g fill="#4c7a22">${[7, 13, 19, 25].map(x => `<ellipse cx="${x}" cy="30.5" rx="1.7" ry="1.3"/>`).join('')}</g><circle cx="7" cy="27" r="5" fill="#8bd448"/><circle cx="13" cy="24.5" r="5.5" fill="#9be05a"/><circle cx="19" cy="23.5" r="5.5" fill="#8bd448"/><circle cx="25" cy="24.5" r="5.5" fill="#9be05a"/><circle cx="13" cy="22" r="1.3" fill="#ffd23f"/><circle cx="19" cy="21" r="1.3" fill="#ffd23f"/><circle cx="25" cy="22" r="1.3" fill="#ffd23f"/><circle cx="32" cy="21" r="6.5" fill="#8bd448"/><circle cx="30.5" cy="19.5" r="1.6" fill="#222"/><circle cx="34.5" cy="19.5" r="1.6" fill="#222"/><path d="M30.5 23.5 Q32.5 25.5 35 23.5" stroke="#2f5c12" stroke-width="1.1" fill="none"/><path d="M30 15 Q29 11 27 10 M34 15 Q35 11 37 10" stroke="#2f5c12" stroke-width="1.2" fill="none"/></g></svg>` },
+  centi: { name: 'Сороконожка', price: 6, move: 'crawl', isNew: true, say: 'Ого! Сороконожка! Сорок ножек — все мои!', svg: centipede },
+  hopper: { name: 'Кузнечик', price: 6, move: 'hop', say: 'Ам! Кузнечик — прыг, и ко мне!',
+    svg: `<svg viewBox="0 0 40 40"><path d="M14 24 L22 11 L29 26" stroke="#5a9c2e" stroke-width="2.6" fill="none" stroke-linejoin="round" stroke-linecap="round"/><ellipse cx="18" cy="25" rx="13" ry="5" fill="#7cc242"/><circle cx="31" cy="22" r="5" fill="#7cc242"/><circle cx="32.5" cy="20.5" r="1.6" fill="#222"/><path d="M33 17 Q36 8 40 7 M31 17 Q32 9 34 6" stroke="#5a9c2e" stroke-width="1.2" fill="none"/><path d="M12 29 L9 35 M20 29 L21 35" stroke="#5a9c2e" stroke-width="2" stroke-linecap="round"/></svg>` },
+  dragon: { name: 'Стрекоза', price: 7, move: 'fly', isNew: true, say: 'Ам! Стрекоза быстрая, а я быстрее!',
+    svg: `<svg viewBox="0 0 40 40"><g class="wing2"><ellipse cx="22" cy="12" rx="3.6" ry="10" fill="#d6f3ff" stroke="#7fbcd9" stroke-width="1" transform="rotate(-18 22 12)"/><ellipse cx="22" cy="28" rx="3.6" ry="10" fill="#d6f3ff" stroke="#7fbcd9" stroke-width="1" transform="rotate(18 22 28)"/><ellipse cx="15" cy="13" rx="3.2" ry="9" fill="#d6f3ff" stroke="#7fbcd9" stroke-width="1" transform="rotate(-38 15 13)"/><ellipse cx="15" cy="27" rx="3.2" ry="9" fill="#d6f3ff" stroke="#7fbcd9" stroke-width="1" transform="rotate(38 15 27)"/></g><path d="M3 20 H26" stroke="#2f8fd8" stroke-width="3.2" stroke-linecap="round"/><ellipse cx="28" cy="20" rx="4" ry="3.6" fill="#2f8fd8"/><circle cx="33" cy="17.5" r="2.9" fill="#1e5c99"/><circle cx="33" cy="22.5" r="2.9" fill="#1e5c99"/><circle cx="34" cy="17" r=".9" fill="#fff"/><circle cx="34" cy="22" r=".9" fill="#fff"/></svg>` },
+  fish: { name: 'Рыбка', price: 7, move: 'swim', isNew: true, say: 'Ням! Свежая рыбка из лужи!',
+    svg: `<svg viewBox="0 0 40 40"><g class="crawl"><path d="M9 20 L1 12 L2 28 Z" fill="#ff8c42"/><path d="M16 13 Q21 6 26 12 Z" fill="#ff8c42"/><ellipse cx="20" cy="20" rx="13" ry="8" fill="#ffa552"/><path d="M15 15 Q17.5 20 15 25 M19.5 14 Q22 20 19.5 26" stroke="#e8722c" stroke-width="1.3" fill="none"/><circle cx="28" cy="18" r="2.4" fill="#fff"/><circle cx="28.7" cy="18" r="1.3" fill="#222"/><path d="M31 22.5 Q33 23 34 21.5" stroke="#c45a1c" stroke-width="1.1" fill="none"/></g></svg>` },
+  butter: { name: 'Бабочка', price: 8, move: 'fly', say: 'Ням! Бабочка сладкая!',
+    svg: `<svg viewBox="0 0 40 40"><g class="wing"><path d="M20 19 C10 2 1 8 5 18 C1 27 9 33 20 22Z" fill="#ff8ad8" stroke="#c2408f" stroke-width="1.2"/><path d="M20 19 C30 2 39 8 35 18 C39 27 31 33 20 22Z" fill="#ff8ad8" stroke="#c2408f" stroke-width="1.2"/><circle cx="11" cy="13" r="2.4" fill="#ffe066"/><circle cx="29" cy="13" r="2.4" fill="#ffe066"/><circle cx="10" cy="24" r="1.8" fill="#8fd3ff"/><circle cx="30" cy="24" r="1.8" fill="#8fd3ff"/></g><ellipse cx="20" cy="21" rx="2.4" ry="9" fill="#4a3a2a"/><path d="M19 12 Q16 6 13 6 M21 12 Q24 6 27 6" stroke="#4a3a2a" stroke-width="1.3" fill="none"/></svg>` },
+  frog: { name: 'Лягушка', price: 12, move: 'hop', say: 'Ого! Целая лягушка! Я наелся!',
+    svg: `<svg viewBox="0 0 40 40"><ellipse cx="20" cy="27" rx="15" ry="10" fill="#6fcf5b"/><ellipse cx="20" cy="30" rx="9" ry="6" fill="#d9f7b0"/><circle cx="12" cy="16" r="6.5" fill="#6fcf5b"/><circle cx="28" cy="16" r="6.5" fill="#6fcf5b"/><circle cx="12" cy="16" r="4" fill="#fff"/><circle cx="28" cy="16" r="4" fill="#fff"/><circle cx="12.5" cy="16.5" r="2" fill="#222"/><circle cx="27.5" cy="16.5" r="2" fill="#222"/><path d="M13 25 Q20 30 27 25" stroke="#2f7d32" stroke-width="1.6" fill="none" stroke-linecap="round"/><ellipse cx="8" cy="35" rx="5" ry="2.5" fill="#5cb84a"/><ellipse cx="32" cy="35" rx="5" ry="2.5" fill="#5cb84a"/></svg>` },
+};
+const MALON_SAY = ['Хрум! Это мне! Спасибо!', 'Ням! Малон доволен!', 'Хрум-хрум! Вкуснятина!', 'Я первый успел!'];
+
+// ---------- голос ----------
+let VOICE = null;
+const MALE = /pavel|павел|dmitr|дмитр|yuri|юрий|male|мужск/i;
+function pickVoice() { try { const vs = speechSynthesis.getVoices().filter(v => /^ru/i.test(v.lang)); VOICE = vs.find(v => MALE.test(v.name)) || vs[0] || null; } catch (e) {} }
+if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speak(t, who) {
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = 'ru-RU'; if (VOICE) u.voice = VOICE; u.rate = 1.3; u.pitch = who === 'malon' ? 1.9 : 1.05;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+// ---------- 1. карточки лапок ----------
+const pawBox = document.getElementById('paws');
+Object.entries(PAWS).forEach(([k, p]) => {
+  const card = document.createElement('div');
+  card.className = 'pcard' + (k === PAW ? ' sel' : '');
+  card.innerHTML = `<h3>${p.name}</h3><p>${p.desc}</p><div class="pair"><div class="lv"></div><div class="mv"></div></div>
+    <div class="acts"><button class="btn" data-m="happy">😊 Радость</button><button class="btn" data-m="sad">😢 Грусть</button><button class="btn main" data-m="pick">Выбрать</button></div>`;
+  pawBox.appendChild(card);
+  const draw = m => { card.querySelector('.lv').innerHTML = leonSVG(m, k); card.querySelector('.mv').innerHTML = geckoSVG(m, k); };
+  draw('neutral');
+  let tm;
+  card.querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
+    if (b.dataset.m === 'pick') {
+      PAW = k; document.querySelectorAll('.pcard').forEach(c => c.classList.toggle('sel', c === card));
+      T.draw(); return;
+    }
+    draw(b.dataset.m); clearTimeout(tm); tm = setTimeout(() => draw('neutral'), 2200);
+  });
+});
+
+// ---------- 2. витрина еды ----------
+document.getElementById('foodrow').innerHTML = Object.values(FOODS).map(f => `<div class="fchip ${f.isNew ? 'new' : ''}"><div class="ic">${f.svg}</div>${f.name}<br>${f.price} мон.</div>`).join('');
+
+// ---------- 3. террариум ----------
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function tween(ms, fn) {
+  return new Promise(res => {
+    const t0 = performance.now();
+    const step = now => { const t = Math.min(1, (now - t0) / ms); fn(t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2); if (t < 1) requestAnimationFrame(step); else res(); };
+    requestAnimationFrame(step);
+  });
+}
+const T = {
+  el: document.getElementById('terra'), coins: 120, busy: false, malonOn: true,
+  leon: document.querySelector('#terra .leon'), malon: document.querySelector('#terra .malon'), tg: document.querySelector('#terra svg.tongue'),
+  draw(lm = 'neutral', mm = 'neutral', chew = '') {
+    this.leon.innerHTML = leonSVG(lm); this.leon.firstChild.classList.add(chew === 'L' ? 'chew' : 'idle');
+    this.malon.innerHTML = geckoSVG(mm); this.malon.firstChild.classList.add(chew === 'M' ? 'chew' : 'idle');
+  },
+  say(t, who) { document.getElementById('bubble').textContent = t; speak(t, who); },
+  rel(el, kx, ky) { const r = el.getBoundingClientRect(), s = this.el.getBoundingClientRect(); return [r.left - s.left + r.width * kx, r.top - s.top + r.height * ky]; },
+  heart(x, y) { const h = document.createElement('div'); h.className = 'heart'; h.textContent = '❤️'; h.style.left = x - 11 + 'px'; h.style.top = y - 24 + 'px'; this.el.appendChild(h); setTimeout(() => h.remove(), 1200); },
+  async feed(type) {
+    if (this.busy) return false;
+    this.busy = true;
+    const F = FOODS[type], W = this.el.clientWidth, H = this.el.clientHeight;
+    // куда сядет букашка: летучие — в воздух, остальные — на песок
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    // лужа: центр (0.47W; 0.887H), полуоси 0.157W × 0.037H
+    const px = W * .47, py = H * .887, prx = W * .157;
+    let lx, ly;
+    if (F.move === 'fly') { lx = rnd(W * .12, W * .88); ly = rnd(H * .1, H * .55); }
+    else if (F.move === 'swim') { lx = px + rnd(-prx * .45, prx * .45); ly = py; }
+    else { lx = Math.random() < .5 ? rnd(W * .08, px - prx - 14) : rnd(px + prx + 14, W * .9); ly = rnd(H * .8, H * .92); }
+    const [mx, my] = this.rel(this.leon, .5, .62), [gx, gy] = this.rel(this.malon, .5, .6);
+    const who = this.malonOn && Math.hypot(lx - gx, ly - gy) < Math.hypot(lx - mx, ly - my) ? 'malon' : 'leon';
+    const f = document.createElement('div'); f.className = 'food'; f.innerHTML = F.svg;
+    const at = (x, y, s = 1, flip = false) => `translate(${x - 22}px, ${y - 22}px) scale(${flip ? -s : s}, ${s})`;
+    const fromLeft = Math.random() < .5, sx = fromLeft ? -30 : W + 30, flip = !fromLeft;
+    const sy = F.move === 'fly' ? rnd(10, H * .4) : ly;
+    const fr = F.move === 'swim'
+      ? [{ transform: at(W * .55, -30, .8, flip) }, { transform: at(lx + 20, H * .45, 1, flip), offset: .55 }, { transform: at(lx, ly, 1, flip) }]
+      : F.move === 'hop'
+      ? [{ transform: at(sx, sy, 1, flip) }, { transform: at((sx + lx) / 2, sy - 60, 1, flip) }, { transform: at(lx, ly, 1, flip) }]
+      : F.move === 'fly'
+        ? [{ transform: at(sx, sy, 1, flip) }, { transform: at((sx + lx) / 2, rnd(10, H * .3), 1, flip) }, { transform: at(lx + (fromLeft ? -20 : 20), ly - 20, 1, flip) }, { transform: at(lx, ly, 1, flip) }]
+        : [{ transform: at(sx, sy, 1, flip) }, { transform: at(lx, ly, 1, flip) }];
+    f.style.transform = at(lx, ly, 1, flip);
+    this.el.appendChild(f);
+    await f.animate(fr, { duration: F.move === 'crawl' ? 1400 : 1000, easing: F.move === 'swim' ? 'ease-in' : 'ease-out' }).finished;
+    if (F.move === 'swim') {
+      // плюх: круги на воде, рыбка плавает туда-сюда
+      for (let i = 0; i < 3; i++) setTimeout(() => {
+        const r = document.createElement('div'); r.className = 'ripple';
+        r.style.left = lx - 12 + 'px'; r.style.top = ly - 4 + 'px'; this.el.appendChild(r); setTimeout(() => r.remove(), 900);
+      }, i * 220);
+      await f.animate([{ transform: at(lx, ly, 1, flip) }, { transform: at(lx - 14, ly + 2, 1, false) }, { transform: at(lx + 14, ly, 1, true) }, { transform: at(lx, ly, 1, flip) }], { duration: 1100 }).finished;
+    }
+    await sleep(200);
+    if (who === 'leon') {
+      this.draw('happy', 'neutral');
+      this.tg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      this.tg.innerHTML = `<line stroke="#ff6f91" stroke-width="8" stroke-linecap="round" x1="${mx}" y1="${my}" x2="${mx}" y2="${my}"/><circle r="8.5" fill="#e8456f" cx="${mx}" cy="${my}"/>`;
+      const line = this.tg.firstChild, tip = this.tg.lastChild;
+      const set = (x, y) => { line.setAttribute('x2', x); line.setAttribute('y2', y); tip.setAttribute('cx', x); tip.setAttribute('cy', y); };
+      await tween(170, t => set(mx + (lx - mx) * t, my + (ly - my) * t));
+      await tween(280, t => { const x = lx + (mx - lx) * t, y = ly + (my - ly) * t; set(x, y); f.style.transform = at(x, y, 1 - .6 * t, flip); });
+      this.tg.innerHTML = ''; f.remove();
+      this.draw('happy', 'neutral', 'L'); this.heart(mx, my - 50);
+      this.say(F.say, 'leon');
+    } else {
+      const dx = lx - gx, dy = ly - gy;
+      this.draw('neutral', 'happy');
+      await this.malon.animate([{ transform: 'translate(0,0)' }, { transform: `translate(${dx * .5}px, ${dy * .5 - 50}px)` }, { transform: `translate(${dx}px, ${dy}px)` }], { duration: 380, easing: 'ease-out' }).finished;
+      f.remove();
+      await this.malon.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: `translate(${dx * .5}px, ${dy * .5 - 40}px)` }, { transform: 'translate(0,0)' }], { duration: 420, easing: 'ease-in' }).finished;
+      this.draw('neutral', 'happy', 'M'); this.heart(gx, gy - 46);
+      this.say(MALON_SAY[Math.random() * MALON_SAY.length | 0], 'malon');
+    }
+    setTimeout(() => { if (!this.busy) this.draw(); }, 1800);
+    await sleep(450);
+    this.busy = false;
+    return true;
+  },
+};
+T.draw();
+const wallet = document.getElementById('wallet');
+const upd = () => { wallet.innerHTML = `${COIN}<b>${T.coins}</b>`; };
+upd();
+document.getElementById('foods').innerHTML = Object.entries(FOODS).map(([k, f]) => `<button class="fd" data-f="${k}"><div class="ic">${f.svg}</div><b>${f.name}</b><span>${COIN}${f.price}</span></button>`).join('');
+document.querySelectorAll('.fd').forEach(b => b.onclick = async () => {
+  const F = FOODS[b.dataset.f];
+  if (T.busy) return;
+  if (T.coins < F.price) { T.say('Нужно больше монеток! Пройди урок.', 'leon'); return; }
+  T.coins -= F.price; upd();
+  const fl = document.createElement('span'); fl.className = 'float'; fl.textContent = '−' + F.price; wallet.appendChild(fl); setTimeout(() => fl.remove(), 1000);
+  await T.feed(b.dataset.f);
+});
+document.getElementById('mtog').onclick = e => {
+  T.malonOn = !T.malonOn; T.malon.classList.toggle('off', !T.malonOn);
+  e.target.textContent = '🦎 Малон: ' + (T.malonOn ? 'дома' : 'гуляет');
+};
+</script>
+</body>
+</html>

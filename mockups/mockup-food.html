@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Еда и Малон — макет</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, "Segoe UI", Roboto, sans-serif; background: #e9ecef; color: #3d2f7a; }
+  h1 { text-align: center; font-size: 20px; margin: 16px 8px 4px; }
+  h2 { text-align: center; font-size: 18px; margin: 22px 8px 4px; }
+  .note { text-align: center; font-size: 14px; color: #555; margin: 0 12px 10px; }
+  .row { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; padding: 0 8px 14px; }
+  .btn { border: 0; border-radius: 14px; padding: 8px 14px; font-weight: 800; font-size: 14px; cursor: pointer; background: #efeaff; color: #3d2f7a; }
+  .btn.main { background: #6c5ce7; color: #fff; }
+  .rules { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 4px 8px 12px; }
+  .rules .btn.on { background: #6c5ce7; color: #fff; }
+
+  .gcard { background: #fff; border-radius: 20px; padding: 10px; width: 300px; text-align: center; box-shadow: 0 3px 10px #0001; }
+  .gcard.sel { outline: 4px solid #ffb300; }
+  .gcard h3 { margin: 4px 0 2px; font-size: 17px; }
+  .gcard p { margin: 0 0 6px; font-size: 13px; color: #555; }
+  .gcard .scene { height: 160px; background: linear-gradient(#f3efff, #e3f4ff); border-radius: 16px; }
+  .gcard .scene .leon { width: 120px; height: 120px; }
+  .gcard .acts { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
+
+  .col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .col h3 { margin: 0; font-size: 17px; }
+  .col .sub { font-size: 13px; color: #555; max-width: 340px; text-align: center; }
+  .phone { width: 340px; min-height: 690px; border-radius: 28px; overflow: hidden; border: 6px solid #222; background: linear-gradient(#e6dcff, #bfe3ff); position: relative; }
+  .top { display: flex; align-items: center; gap: 8px; padding: 10px 12px 4px; font-weight: 800; }
+  .top .ttl { flex: 1; text-align: center; font-size: 16px; }
+  .ib { background: #fff; border-radius: 12px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex: none; }
+  .wallet { background: #fff; border-radius: 18px; padding: 4px 10px 4px 6px; display: flex; align-items: center; gap: 4px; font-size: 17px; position: relative; flex: none; }
+  .wallet svg { width: 22px; height: 22px; }
+  .float { position: absolute; right: 4px; top: -4px; color: #e5533d; font-weight: 900; animation: up 1s ease-out forwards; }
+  @keyframes up { to { transform: translateY(-30px); opacity: 0; } }
+
+  .scene { position: relative; height: 200px; margin: 4px 10px; }
+  .scene .leon { position: absolute; left: 3%; bottom: 2px; width: 150px; height: 150px; }
+  .scene .malon { position: absolute; right: 3%; bottom: 0; width: 92px; height: 92px; transition: opacity .3s; }
+  .scene .malon.off { opacity: 0; }
+  .scene svg.tongue { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: visible; }
+  .scene .food { position: absolute; left: 0; top: 0; width: 44px; height: 44px; z-index: 4; pointer-events: none; }
+  .scene .bubble { position: absolute; left: 44%; top: 0; max-width: 54%; background: #fff; border-radius: 14px; padding: 6px 10px; font-size: 14px; font-weight: 700; box-shadow: 0 2px 6px #0002; z-index: 3; }
+  .mtog { position: absolute; right: 0; bottom: 96px; border: 0; border-radius: 12px; padding: 4px 8px; font-size: 12px; font-weight: 800; background: #fff; cursor: pointer; z-index: 6; box-shadow: 0 2px 6px #0002; }
+  .leon svg, .malon svg, .food svg, .fd .ic svg { width: 100%; height: 100%; overflow: visible; display: block; }
+  .chew { animation: chew .16s ease-in-out 4; transform-origin: 50% 100%; }
+  @keyframes chew { 50% { transform: scale(1.05, .92); } }
+  .heart { position: absolute; font-size: 22px; animation: heart 1.2s ease-out forwards; z-index: 6; pointer-events: none; }
+  @keyframes heart { to { transform: translateY(-60px) scale(1.4); opacity: 0; } }
+  .wing { animation: flap .14s ease-in-out infinite alternate; transform-origin: 20px 20px; }
+  @keyframes flap { to { transform: scaleX(.3); } }
+  .wiggle { animation: wig .3s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 50%; }
+  @keyframes wig { to { transform: scaleX(.85) skewX(10deg); } }
+  .idle { animation: breathe 3s ease-in-out infinite; transform-origin: 50% 100%; }
+  @keyframes breathe { 50% { transform: scale(1.025, .985); } }
+
+  .foods { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 6px 12px; }
+  .fd { background: #fff; border: 0; border-radius: 14px; padding: 6px 2px; cursor: pointer; position: relative; box-shadow: 0 2px 6px #4b3a8f22; color: inherit; font: inherit; }
+  .fd:active { transform: scale(.95); }
+  .fd .ic { width: 40px; height: 40px; margin: 0 auto; }
+  .fd b { display: block; font-size: 11px; line-height: 1.1; min-height: 24px; display: flex; align-items: center; justify-content: center; }
+  .fd span { font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 2px; }
+  .fd span svg { width: 13px; height: 13px; }
+  .fd .g { position: absolute; top: -7px; right: -5px; width: 24px; height: 24px; background: #fff; border-radius: 50%; box-shadow: 0 1px 4px #0003; padding: 1px; }
+  .fd .g svg { width: 100%; height: 100%; }
+  body.turns .fd .g { display: none; }
+  .tabs { display: flex; gap: 6px; padding: 4px 12px; }
+  .tabs div { flex: 1; background: #fff8; border-radius: 12px; padding: 7px 0; text-align: center; font-size: 13px; font-weight: 800; cursor: pointer; }
+  .tabs div.on { background: #fff; box-shadow: 0 2px 6px #4b3a8f22; }
+  .tabpane { padding: 4px 12px; font-size: 14px; }
+  .friend { background: #fff; border-radius: 16px; padding: 10px; display: flex; gap: 10px; align-items: center; }
+  .friend .pv { width: 70px; height: 70px; flex: none; }
+  .strip { display: flex; gap: 8px; overflow-x: auto; padding: 6px 12px 10px; }
+  .strip .fd { flex: none; width: 70px; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 6px 12px; opacity: .5; }
+  .cards div { background: #fff; border-radius: 14px; height: 64px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; text-align: center; padding: 4px; }
+  .lbl { font-size: 13px; font-weight: 800; padding: 2px 14px; opacity: .75; }
+  .terra { margin: 6px 10px; border-radius: 22px; border: 6px solid #cfe9ff; background: linear-gradient(#e2f8dc, #c4ecb6 72%, #e8d29a 72%); box-shadow: inset 0 0 0 2px #fff8, 0 4px 12px #0002; overflow: hidden; position: relative; }
+  .terra .decor { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .terra .scene { height: 280px; margin: 0; }
+  .terra .scene .leon { width: 160px; height: 160px; bottom: 54px; left: 2%; }
+  .terra .scene .malon { bottom: 10px; }
+  .jar { margin: 8px 12px; background: #fff; border-radius: 20px; padding: 6px 6px 8px; }
+  .jar h4 { margin: 2px 0 4px; text-align: center; font-size: 13px; }
+  .jar .foods { padding: 2px 4px; }
+  .jar .fd { box-shadow: none; background: #f5f2ff; }
+</style>
+</head>
+<body>
+<h1>Еда для Леона и друг Малон — макет</h1>
+<p class="note">Нажимайте на еду: Леон ловит её языком, а Малон подпрыгивает и хватает свою. Кнопка «🦎 Малон» на сцене — включить или выключить друга. Звук включён: у Малона голос выше.</p>
+
+<h2>1. Как выглядит Малон</h2>
+<p class="note">Выберите одного — он появится во всех трёх экранах ниже.</p>
+<div class="row" id="geckos"></div>
+
+<h2>2. Как Малон делит еду</h2>
+<div class="rules">
+  <button class="btn on" data-r="own">У Малона своя еда (значок 🦎)</button>
+  <button class="btn" data-r="turns">Едят по очереди</button>
+</div>
+<p class="note" id="ruleNote"></p>
+
+<h2>3. Где кормить</h2>
+<div class="row" id="frames"></div>
+
+<script>
+// ---------- Леон (как в игре) ----------
+const SKINS = { green: { n: ['#6ccc5c', '#358f42', '#dcf7a4'], h: ['#7bd96a', '#3c9c4a', '#e6ffb0'] } };
+const SAD = ['#a2a9d6', '#6c73a8', '#dfe2f5'];
+let LID = 0;
+function leonSVG(mood) {
+  const id = 'lg' + (++LID);
+  const [body, dark, belly] = mood === 'sad' ? SAD : SKINS.green[mood === 'happy' ? 'h' : 'n'];
+  const sad = mood === 'sad', happy = mood === 'happy';
+  const mouth = sad ? 'M78 130 Q100 116 122 130' : happy ? 'M68 116 Q100 148 132 116 Q100 132 68 116Z' : 'M74 120 Q100 134 126 120';
+  const px = sad ? 0 : 4, py = sad ? 5 : 0, pr = happy ? 7.5 : 6.5;
+  return `<svg viewBox="0 0 200 200"><defs><radialGradient id="${id}g" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>
+    <path d="M136 168 C176 172 186 140 166 130 C150 122 140 140 152 146" stroke="${body}" stroke-width="13" fill="none" stroke-linecap="round"/>
+    <ellipse cx="100" cy="160" rx="40" ry="30" fill="${body}"/><ellipse cx="100" cy="166" rx="24" ry="18" fill="${belly}"/>
+    <ellipse cx="78" cy="188" rx="13" ry="7" fill="${dark}"/><ellipse cx="122" cy="188" rx="13" ry="7" fill="${dark}"/>
+    <path d="M62 62 Q100 4 138 62Z" fill="${dark}"/>
+    <ellipse cx="100" cy="92" rx="64" ry="52" fill="${body}"/><ellipse cx="100" cy="92" rx="64" ry="52" fill="url(#${id}g)"/>
+    <circle cx="100" cy="58" r="5" fill="${dark}" opacity=".35"/><circle cx="84" cy="66" r="4" fill="${dark}" opacity=".35"/><circle cx="116" cy="66" r="4" fill="${dark}" opacity=".35"/>
+    <circle cx="54" cy="90" r="24" fill="${body}" stroke="${dark}" stroke-width="3"/><circle cx="146" cy="90" r="24" fill="${body}" stroke="${dark}" stroke-width="3"/>
+    <circle cx="56" cy="90" r="14" fill="#fff"/><circle cx="144" cy="90" r="14" fill="#fff"/>
+    <circle cx="${56 + px}" cy="${90 + py}" r="${pr}" fill="#222"/><circle cx="${144 - px}" cy="${90 + py}" r="${pr}" fill="#222"/>
+    <circle cx="${58 + px}" cy="${87 + py}" r="2.2" fill="#fff"/><circle cx="${146 - px}" cy="${87 + py}" r="2.2" fill="#fff"/>
+    <path d="${mouth}" stroke="${dark}" stroke-width="4" fill="${happy ? '#d84a5f' : 'none'}" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="70" cy="116" r="7" fill="#ff8fa3" opacity=".6"/><circle cx="130" cy="116" r="7" fill="#ff8fa3" opacity=".6"/></svg>`;
+}
+
+// ---------- Малон-геккон ----------
+const GECKO = {
+  leo:  { name: 'Леопардовый', desc: 'Жёлтый в коричневых пятнышках, как маленький леопард. Всегда улыбается.', body: '#ffd166', dark: '#8a5a19', belly: '#fff4d6', spot: '#7a4e22', eye: '#f2b33d' },
+  sky:  { name: 'Небесный', desc: 'Голубой с оранжевыми точками, яркий и весёлый.', body: '#5fd3ef', dark: '#1f7f9e', belly: '#e8fbff', spot: '#ff7a59', eye: '#ffd166' },
+  lash: { name: 'Ресничный', desc: 'Рыжий, с «ресничками»-гребешками над глазами.', body: '#ff9f5a', dark: '#a84f24', belly: '#fff0e0', spot: '#d8662e', eye: '#ffe14d' },
+};
+let GV = 'leo';
+function geckoSVG(v, mood) {
+  const c = GECKO[v], happy = mood === 'happy';
+  const foot = x => `<g transform="translate(${x} 147)"><ellipse rx="9" ry="6" fill="${c.body}"/>${[-8, 0, 8].map(t => `<circle cx="${t}" cy="${t ? 5 : 7}" r="3.6" fill="${c.body}" stroke="${c.dark}" stroke-width="1.3"/>`).join('')}</g>`;
+  const eye = x => happy
+    ? `<circle cx="${x}" cy="62" r="17" fill="${c.body}" stroke="${c.dark}" stroke-width="2.5"/><path d="M${x - 9} 65 Q${x} 54 ${x + 9} 65" stroke="#222" stroke-width="4" fill="none" stroke-linecap="round"/>`
+    : `<circle cx="${x}" cy="62" r="17" fill="${c.body}" stroke="${c.dark}" stroke-width="2.5"/><circle cx="${x}" cy="62" r="13" fill="${c.eye}"/><ellipse cx="${x}" cy="62" rx="3.5" ry="10" fill="#222"/><circle cx="${x + 4}" cy="57" r="2.4" fill="#fff"/>`;
+  const spots = { leo: [[52, 96], [64, 46], [96, 44], [110, 96], [70, 120], [92, 128], [60, 132], [100, 114], [132, 128], [146, 110]],
+    sky: [[60, 44], [100, 46], [80, 40], [68, 122], [94, 126], [134, 130], [148, 112]], lash: [[66, 120], [94, 124], [138, 126]] }[v];
+  let s = `<svg viewBox="0 0 160 160">
+    <path d="M104 132 C140 142 158 118 144 102 C134 94 122 104 130 112" stroke="${c.body}" stroke-width="16" fill="none" stroke-linecap="round"/>
+    <ellipse cx="80" cy="124" rx="32" ry="24" fill="${c.body}"/><ellipse cx="80" cy="131" rx="19" ry="13" fill="${c.belly}"/>
+    ${foot(50)}${foot(110)}
+    <ellipse cx="80" cy="78" rx="56" ry="40" fill="${c.body}"/>`;
+  s += spots.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="${v === 'leo' ? 3.6 : 3}" fill="${c.spot}" opacity=".85"/>`).join('');
+  s += eye(50) + eye(110);
+  if (v === 'lash') s += [50, 110].map(x => `<path d="M${x - 18} 52 L${x - 14} 39 L${x - 9} 48 L${x - 4} 35 L${x + 1} 46 L${x + 6} 34 L${x + 10} 45 L${x + 15} 38 L${x + 18} 52 Z" fill="${c.dark}"/>`).join('') +
+    `<path d="M26 76 l-7 -3 l6 7 l-8 1 l8 5 M134 76 l7 -3 l-6 7 l8 1 l-8 5" stroke="${c.dark}" stroke-width="2" fill="none" stroke-linejoin="round"/>`;
+  s += `<circle cx="73" cy="80" r="1.9" fill="${c.dark}"/><circle cx="87" cy="80" r="1.9" fill="${c.dark}"/>`;
+  s += happy ? `<path d="M44 90 Q80 124 116 90 Q80 104 44 90Z" fill="#e8566f" stroke="${c.dark}" stroke-width="3" stroke-linejoin="round"/>`
+             : `<path d="M44 90 Q80 110 116 90" stroke="${c.dark}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+  s += `<circle cx="38" cy="92" r="6" fill="#ff8fa3" opacity=".55"/><circle cx="122" cy="92" r="6" fill="#ff8fa3" opacity=".55"/>`;
+  return s + '</svg>';
+}
+
+// ---------- Еда ----------
+const COIN = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.5" fill="#ffc93c" stroke="#d99a00" stroke-width="2"/><path d="M12 7.2 L13.4 10.4 L16.8 10.6 L14.2 12.8 L15 16.2 L12 14.4 L9 16.2 L9.8 12.8 L7.2 10.6 L10.6 10.4Z" fill="#e3a000"/></svg>`;
+const FOODS = {
+  ant: { name: 'Муравьишка', price: 3, move: 'crawl', malon: true, say: 'Хрум! Муравьишка — хрустяшка!',
+    svg: `<svg viewBox="0 0 40 40"><g stroke="#3b2a1f" stroke-width="1.6" stroke-linecap="round" fill="none"><path d="M14 24 L9 31 M19 24 L19 32 M23 24 L28 31 M14 19 L9 13 M19 19 L19 12 M23 19 L28 13"/><path d="M33 16 Q36 10 39 10 M31 15 Q32 9 35 7"/></g><ellipse cx="10" cy="22" rx="7" ry="5.5" fill="#3b2a1f"/><circle cx="20" cy="21.5" r="4" fill="#4a3526"/><circle cx="30" cy="20" r="5" fill="#3b2a1f"/><circle cx="32" cy="18.5" r="1.4" fill="#fff"/></svg>` },
+  fly: { name: 'Муха', price: 3, move: 'fly', say: 'Ам! Муха — моя любимая!',
+    svg: `<svg viewBox="0 0 40 40"><g class="wing"><ellipse cx="13" cy="15" rx="8" ry="5" fill="#e3f6ff" stroke="#7ab" stroke-width="1.2" transform="rotate(-30 13 15)"/><ellipse cx="27" cy="15" rx="8" ry="5" fill="#e3f6ff" stroke="#7ab" stroke-width="1.2" transform="rotate(30 27 15)"/></g><ellipse cx="20" cy="24" rx="7.5" ry="9.5" fill="#33303f"/><circle cx="16.3" cy="18" r="3.2" fill="#d33"/><circle cx="23.7" cy="18" r="3.2" fill="#d33"/></svg>` },
+  worm: { name: 'Червячок', price: 4, move: 'crawl', malon: true, say: 'Ням! Червячок вкусный!',
+    svg: `<svg viewBox="0 0 40 40"><path class="wiggle" d="M4 28 C10 18 16 34 22 26 C26 20 29 22 31 20" stroke="#ff9eb5" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="33" cy="19" r="5.5" fill="#ff9eb5"/><circle cx="34.6" cy="17.4" r="1.4" fill="#222"/><path d="M32 21.6 Q34 23.2 36.2 21.6" stroke="#c2577a" stroke-width="1.1" fill="none"/></svg>` },
+  bug: { name: 'Божья коровка', price: 5, move: 'fly', say: 'Ням! Божья коровка!',
+    svg: `<svg viewBox="0 0 40 40"><path d="M16 9 Q14 4 10 4 M24 9 Q26 4 30 4" stroke="#222" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="20" cy="12" r="6" fill="#222"/><circle cx="17.5" cy="10.5" r="1.4" fill="#fff"/><circle cx="22.5" cy="10.5" r="1.4" fill="#fff"/><ellipse cx="20" cy="24" rx="13" ry="12" fill="#e53935"/><path d="M20 13 V36" stroke="#222" stroke-width="1.6"/><circle cx="14" cy="21" r="2.6" fill="#222"/><circle cx="26" cy="21" r="2.6" fill="#222"/><circle cx="15" cy="29" r="2.2" fill="#222"/><circle cx="25" cy="29" r="2.2" fill="#222"/><ellipse cx="15" cy="17" rx="3" ry="1.6" fill="#fff" opacity=".5"/></svg>` },
+  hopper: { name: 'Кузнечик', price: 6, move: 'hop', malon: true, say: 'Ам! Кузнечик — прыг, и ко мне!',
+    svg: `<svg viewBox="0 0 40 40"><path d="M14 24 L22 11 L29 26" stroke="#5a9c2e" stroke-width="2.6" fill="none" stroke-linejoin="round" stroke-linecap="round"/><ellipse cx="18" cy="25" rx="13" ry="5" fill="#7cc242"/><circle cx="31" cy="22" r="5" fill="#7cc242"/><circle cx="32.5" cy="20.5" r="1.6" fill="#222"/><path d="M33 17 Q36 8 40 7 M31 17 Q32 9 34 6" stroke="#5a9c2e" stroke-width="1.2" fill="none"/><path d="M12 29 L9 35 M20 29 L21 35" stroke="#5a9c2e" stroke-width="2" stroke-linecap="round"/></svg>` },
+  butter: { name: 'Бабочка', price: 8, move: 'fly', say: 'Ням! Бабочка сладкая!',
+    svg: `<svg viewBox="0 0 40 40"><g class="wing"><path d="M20 19 C10 2 1 8 5 18 C1 27 9 33 20 22Z" fill="#ff8ad8" stroke="#c2408f" stroke-width="1.2"/><path d="M20 19 C30 2 39 8 35 18 C39 27 31 33 20 22Z" fill="#ff8ad8" stroke="#c2408f" stroke-width="1.2"/><circle cx="11" cy="13" r="2.4" fill="#ffe066"/><circle cx="29" cy="13" r="2.4" fill="#ffe066"/><circle cx="10" cy="24" r="1.8" fill="#8fd3ff"/><circle cx="30" cy="24" r="1.8" fill="#8fd3ff"/></g><ellipse cx="20" cy="21" rx="2.4" ry="9" fill="#4a3a2a"/><path d="M19 12 Q16 6 13 6 M21 12 Q24 6 27 6" stroke="#4a3a2a" stroke-width="1.3" fill="none"/></svg>` },
+  frog: { name: 'Лягушка', price: 12, move: 'hop', say: 'Ого! Целая лягушка! Я наелся!',
+    svg: `<svg viewBox="0 0 40 40"><ellipse cx="20" cy="27" rx="15" ry="10" fill="#6fcf5b"/><ellipse cx="20" cy="30" rx="9" ry="6" fill="#d9f7b0"/><circle cx="12" cy="16" r="6.5" fill="#6fcf5b"/><circle cx="28" cy="16" r="6.5" fill="#6fcf5b"/><circle cx="12" cy="16" r="4" fill="#fff"/><circle cx="28" cy="16" r="4" fill="#fff"/><circle cx="12.5" cy="16.5" r="2" fill="#222"/><circle cx="27.5" cy="16.5" r="2" fill="#222"/><path d="M13 25 Q20 30 27 25" stroke="#2f7d32" stroke-width="1.6" fill="none" stroke-linecap="round"/><ellipse cx="8" cy="35" rx="5" ry="2.5" fill="#5cb84a"/><ellipse cx="32" cy="35" rx="5" ry="2.5" fill="#5cb84a"/></svg>` },
+};
+const MALON_SAY = ['Хрум! Это мне! Спасибо!', 'Ням! Малон доволен!', 'Хрум-хрум! Вкуснятина!'];
+let RULE = 'own';
+
+// ---------- голос ----------
+let VOICE = null;
+const MALE = /pavel|павел|dmitr|дмитр|yuri|юрий|male|мужск/i;
+function pickVoice() { const vs = speechSynthesis.getVoices().filter(v => /^ru/i.test(v.lang)); VOICE = vs.find(v => MALE.test(v.name)) || vs[0] || null; }
+if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speak(t, who) {
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(t.replace(/[\u{1F000}-\u{1FFFF}]/gu, ''));
+    u.lang = 'ru-RU'; if (VOICE) u.voice = VOICE; u.rate = 1.3; u.pitch = who === 'malon' ? 1.9 : 1.05;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+// ---------- сцена: Леон, Малон, язык ----------
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function tween(ms, fn) {
+  return new Promise(res => {
+    const t0 = performance.now();
+    const step = now => { const t = Math.min(1, (now - t0) / ms); fn(t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2); if (t < 1) requestAnimationFrame(step); else res(); };
+    requestAnimationFrame(step);
+  });
+}
+const SCENES = [];
+class Scene {
+  constructor(el, o = {}) {
+    this.el = el; this.o = o; this.turn = 0; this.busy = false; this.malonOn = true;
+    el.classList.add('scene');
+    el.innerHTML = `<div class="malon"></div><div class="leon"></div><svg class="tongue"></svg>` +
+      (o.bubble === false ? '' : `<div class="bubble">${o.hello || 'Покорми меня!'}</div>`) +
+      (o.toggle === false ? '' : `<button class="mtog">🦎 Малон: дома</button>`);
+    this.leonEl = el.querySelector('.leon'); this.malonEl = el.querySelector('.malon');
+    this.tg = el.querySelector('svg.tongue'); this.bub = el.querySelector('.bubble');
+    const t = el.querySelector('.mtog');
+    if (t) t.onclick = () => { this.malonOn = !this.malonOn; this.malonEl.classList.toggle('off', !this.malonOn); t.textContent = '🦎 Малон: ' + (this.malonOn ? 'дома' : 'гуляет'); };
+    this.draw(); SCENES.push(this);
+  }
+  draw(lm = 'neutral', mm = 'neutral', anim = 'idle') {
+    this.leonEl.innerHTML = leonSVG(lm); this.leonEl.firstChild.classList.add(anim === 'chewL' ? 'chew' : 'idle');
+    this.malonEl.innerHTML = geckoSVG(GV, mm); this.malonEl.firstChild.classList.add(anim === 'chewM' ? 'chew' : 'idle');
+  }
+  say(t, who) { if (this.bub) this.bub.textContent = t; speak(t, who); }
+  eater(type) {
+    if (!this.malonOn) return 'leon';
+    if (RULE === 'own') return FOODS[type].malon ? 'malon' : 'leon';
+    return this.turn++ % 2 ? 'malon' : 'leon';
+  }
+  heart(x, y) { const h = document.createElement('div'); h.className = 'heart'; h.textContent = '❤️'; h.style.left = x - 11 + 'px'; h.style.top = y - 20 + 'px'; this.el.appendChild(h); setTimeout(() => h.remove(), 1200); }
+  mouth(el, k) { const r = el.getBoundingClientRect(), s = this.el.getBoundingClientRect(); return [r.left - s.left + r.width * .5, r.top - s.top + r.height * k]; }
+  async feed(type, forceEater) {
+    if (this.busy) return false;
+    this.busy = true;
+    const F = FOODS[type], who = forceEater || this.eater(type);
+    const W = this.el.clientWidth, H = this.el.clientHeight;
+    const ground = H - 24, tx = W * (who === 'malon' ? .6 : .55), ty = F.move === 'fly' ? H * .3 : ground;
+    const f = document.createElement('div'); f.className = 'food'; f.innerHTML = F.svg;
+    const at = (x, y, s = 1) => `translate(${x - 22}px, ${y - 22}px) scale(${s})`;
+    this.el.appendChild(f);
+    const sx = W + 30, sy = F.move === 'fly' ? 6 : ground;
+    const frames = F.move === 'hop'
+      ? [{ transform: at(sx, sy) }, { transform: at((sx + tx) / 2 + 30, sy - 50) }, { transform: at((sx + tx) / 2, sy) }, { transform: at(tx + 10, ty - 40) }, { transform: at(tx, ty) }]
+      : F.move === 'fly'
+        ? [{ transform: at(sx, sy) }, { transform: at(W * .8, H * .05) }, { transform: at(W * .7, H * .4) }, { transform: at(tx, ty) }]
+        : [{ transform: at(sx, sy) }, { transform: at(tx, ty) }];
+    f.style.transform = at(tx, ty);
+    await f.animate(frames, { duration: F.move === 'crawl' ? 1100 : 900, easing: 'ease-out' }).finished;
+    await sleep(150);
+    if (who === 'leon') {
+      const [mx, my] = this.mouth(this.leonEl, .62);
+      this.draw('happy', 'neutral');
+      this.tg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      this.tg.innerHTML = `<line stroke="#ff6f91" stroke-width="8" stroke-linecap="round" x1="${mx}" y1="${my}" x2="${mx}" y2="${my}"/><circle r="8" fill="#e8456f" cx="${mx}" cy="${my}"/>`;
+      const line = this.tg.firstChild, tip = this.tg.lastChild;
+      const set = (x, y) => { line.setAttribute('x2', x); line.setAttribute('y2', y); tip.setAttribute('cx', x); tip.setAttribute('cy', y); };
+      await tween(150, t => set(mx + (tx - mx) * t, my + (ty - my) * t));
+      await tween(260, t => { const x = tx + (mx - tx) * t, y = ty + (my - ty) * t; set(x, y); f.style.transform = at(x, y, 1 - .6 * t); });
+      this.tg.innerHTML = ''; f.remove();
+      this.draw('happy', 'neutral', 'chewL');
+      this.heart(mx, my - 40);
+      this.say(F.say, 'leon');
+    } else {
+      const [gx, gy] = this.mouth(this.malonEl, .58);
+      const dx = tx - gx, dy = ty - gy;
+      this.draw('neutral', 'happy');
+      await this.malonEl.animate([{ transform: 'translate(0,0)' }, { transform: `translate(${dx * .5}px, ${dy * .5 - 40}px)` }, { transform: `translate(${dx}px, ${dy}px)` }], { duration: 320, easing: 'ease-out' }).finished;
+      f.remove();
+      await this.malonEl.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: `translate(${dx * .5}px, ${dy * .5 - 30}px)` }, { transform: 'translate(0,0)' }], { duration: 380, easing: 'ease-in' }).finished;
+      this.draw('neutral', 'happy', 'chewM');
+      this.heart(gx, gy - 40);
+      this.say(MALON_SAY[Math.random() * MALON_SAY.length | 0], 'malon');
+    }
+    setTimeout(() => { if (!this.busy) this.draw(); }, 1800);
+    await sleep(500);
+    this.busy = false;
+    return true;
+  }
+}
+
+// ---------- кнопки еды и кошелёк ----------
+function foodBtn(type) {
+  const F = FOODS[type];
+  return `<button class="fd" data-f="${type}"><div class="ic">${F.svg}</div><b>${F.name}</b><span>${COIN}${F.price}</span>${F.malon ? `<div class="g">${geckoSVG(GV, 'neutral')}</div>` : ''}</button>`;
+}
+const ALL = Object.keys(FOODS);
+function wire(root, scene, wallet) {
+  let coins = 80;
+  const upd = () => { wallet.innerHTML = `${COIN}<b>${coins}</b>`; };
+  upd();
+  root.querySelectorAll('.fd').forEach(b => b.onclick = async () => {
+    const F = FOODS[b.dataset.f];
+    if (scene.busy) return;
+    if (coins < F.price) { scene.say('Нужно больше монеток! Пройди урок.', 'leon'); return; }
+    coins -= F.price; upd();
+    const fl = document.createElement('span'); fl.className = 'float'; fl.textContent = '−' + F.price; wallet.appendChild(fl); setTimeout(() => fl.remove(), 1000);
+    await scene.feed(b.dataset.f);
+  });
+}
+
+// ---------- 1. варианты Малона ----------
+const gbox = document.getElementById('geckos');
+Object.entries(GECKO).forEach(([k, g]) => {
+  const card = document.createElement('div');
+  card.className = 'gcard' + (k === GV ? ' sel' : '');
+  card.innerHTML = `<h3>${g.name}</h3><p>${g.desc}</p><div class="sc"></div><div class="acts"><button class="btn" data-a="feed">🐛 Покормить</button><button class="btn main" data-a="pick">Выбрать</button></div>`;
+  gbox.appendChild(card);
+  const sc = new Scene(card.querySelector('.sc'), { toggle: false, bubble: false });
+  sc.gv = k;
+  sc.draw = function (lm = 'neutral', mm = 'neutral', anim = 'idle') {
+    this.leonEl.innerHTML = leonSVG(lm); this.leonEl.firstChild.classList.add(anim === 'chewL' ? 'chew' : 'idle');
+    this.malonEl.innerHTML = geckoSVG(k, mm); this.malonEl.firstChild.classList.add(anim === 'chewM' ? 'chew' : 'idle');
+  };
+  sc.draw();
+  card.querySelector('[data-a=feed]').onclick = () => sc.feed('worm', 'malon');
+  card.querySelector('[data-a=pick]').onclick = () => {
+    GV = k;
+    document.querySelectorAll('.gcard').forEach(c => c.classList.remove('sel')); card.classList.add('sel');
+    SCENES.forEach(s => { if (s.gv === undefined) s.draw(); });
+    document.querySelectorAll('.fd .g').forEach(g => { g.innerHTML = geckoSVG(GV, 'neutral'); });
+    speak('Привет! Я Малон, друг Леона!', 'malon');
+  };
+});
+
+// ---------- 2. правило ----------
+const notes = {
+  own: 'Муравьишки, червячки и кузнечики — еда Малона (на них значок геккона). Если Малон гуляет — всё съедает Леон.',
+  turns: 'Любая еда: один раз ест Леон, другой раз — Малон. Если Малон гуляет — всё съедает Леон.',
+};
+document.querySelectorAll('.rules .btn').forEach(b => b.onclick = () => {
+  RULE = b.dataset.r;
+  document.querySelectorAll('.rules .btn').forEach(x => x.classList.toggle('on', x === b));
+  document.body.classList.toggle('turns', RULE === 'turns');
+  document.getElementById('ruleNote').textContent = notes[RULE];
+});
+document.getElementById('ruleNote').textContent = notes.own;
+
+// ---------- 3. три экрана ----------
+const frames = document.getElementById('frames');
+function frame(title, sub, html) {
+  const col = document.createElement('div'); col.className = 'col';
+  col.innerHTML = `<h3>${title}</h3><div class="sub">${sub}</div><div class="phone">${html}</div>`;
+  frames.appendChild(col);
+  return col.querySelector('.phone');
+}
+
+// A — «Домик Леона»: гардероб становится домиком с вкладками
+let p = frame('A · «Домик Леона»', 'Кнопка 👕 в меню ведёт в домик: вкладки «Одежда», «Еда», «Друзья». Малон покупается во вкладке «Друзья».',
+  `<div class="top"><div class="ib">←</div><div class="ttl">Домик Леона</div><div class="wallet"></div></div>
+   <div class="tabs"><div data-t="wear">👕 Одежда</div><div class="on" data-t="food">🐞 Еда</div><div data-t="fr">🦎 Друзья</div></div>
+   <div class="sc"></div>
+   <div class="pane" data-p="food"><div class="lbl">Нажми — и Леон поймает!</div><div class="foods">${ALL.map(foodBtn).join('')}</div></div>
+   <div class="pane tabpane" data-p="wear" style="display:none">Здесь одежда — как сейчас в гардеробе.</div>
+   <div class="pane tabpane" data-p="fr" style="display:none"><div class="friend"><div class="pv">${geckoSVG(GV, 'happy')}</div><div><b>Малон — друг Леона</b><br>Живёт рядом и ест свою еду.<br><button class="btn main" style="margin-top:6px">Купить · 100</button></div></div></div>`);
+let s = new Scene(p.querySelector('.sc'), { hello: 'Я проголодался! Покорми меня!' });
+wire(p, s, p.querySelector('.wallet'));
+p.querySelectorAll('.tabs div').forEach(t => t.onclick = () => {
+  p.querySelectorAll('.tabs div').forEach(x => x.classList.toggle('on', x === t));
+  p.querySelectorAll('.pane').forEach(x => { x.style.display = x.dataset.p === t.dataset.t ? '' : 'none'; });
+});
+
+// B — кормушка прямо в меню
+p = frame('B · «Кормушка в меню»', 'Еда — полоской прямо в главном меню, под Леоном и Малоном. Кормить можно в любой момент, не уходя от уроков.',
+  `<div class="top"><div class="wallet"></div><div class="ttl">Шахматы с Леоном</div><div class="ib">👕</div></div>
+   <div class="sc"></div>
+   <div class="lbl">Покормить:</div>
+   <div class="strip">${ALL.map(foodBtn).join('')}</div>
+   <div class="lbl">Уроки</div>
+   <div class="cards"><div>1. Расставь фигуры</div><div>2. Имена клеток</div><div>3. Пешечный бой</div><div>4. Дебют белыми</div><div>5. Дебют чёрными</div><div>6. Рокировка</div></div>`);
+s = new Scene(p.querySelector('.sc'), { hello: 'Выбирай урок — или покорми нас!' });
+wire(p, s, p.querySelector('.wallet'));
+
+// C — отдельный террариум
+p = frame('C · «Террариум»', 'Отдельный экран-террариум (кнопка 🍽 в меню): ветка для Леона, камень для Малона, внизу — банка с едой.',
+  `<div class="top"><div class="ib">←</div><div class="ttl">Террариум</div><div class="wallet"></div></div>
+   <div class="terra"><svg class="decor" viewBox="0 0 300 280" preserveAspectRatio="none">
+     <path d="M0 196 Q90 180 170 194" stroke="#8a5a2b" stroke-width="10" fill="none" stroke-linecap="round"/>
+     <ellipse cx="30" cy="186" rx="14" ry="7" fill="#3fa34d" transform="rotate(-25 30 186)"/><ellipse cx="150" cy="184" rx="13" ry="6" fill="#3fa34d" transform="rotate(20 150 184)"/>
+     <ellipse cx="250" cy="262" rx="52" ry="20" fill="#a8a29a"/><ellipse cx="240" cy="256" rx="30" ry="9" fill="#c4bdb4"/>
+     <path d="M10 280 Q20 230 14 210 M24 280 Q36 240 44 222 M290 280 Q284 236 292 214" stroke="#4caf50" stroke-width="6" fill="none" stroke-linecap="round"/>
+     <circle cx="270" cy="30" r="16" fill="#fff7c2" opacity=".8"/>
+   </svg><div class="sc"></div></div>
+   <div class="jar"><h4>🫙 Банка с едой</h4><div class="foods">${ALL.map(foodBtn).join('')}</div></div>`);
+s = new Scene(p.querySelector('.sc'), { hello: 'Добро пожаловать в наш домик!' });
+wire(p, s, p.querySelector('.wallet'));
+</script>
+</body>
+</html>
