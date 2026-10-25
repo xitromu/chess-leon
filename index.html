@@ -289,7 +289,7 @@
 <script>
 // ENGINE START
 // Доска: массив из 64 клеток, индекс = ряд * 8 + вертикаль (a1 = 0, h8 = 63).
-// Фигура: { t: 'P'|'N'|'B'|'R'|'Q'|'K', c: 'w'|'b', id }. Взятия на проходе нет — для малышей не нужно.
+// Фигура: { t: 'P'|'N'|'B'|'R'|'Q'|'K', c: 'w'|'b', id }. st.ep — клетка для взятия на проходе или -1.
 const FILES = 'abcdefgh';
 const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -';
 const sqName = s => FILES[s & 7] + ((s >> 3) + 1);
@@ -298,7 +298,7 @@ const opp = c => (c === 'w' ? 'b' : 'w');
 let PID = 1;
 
 function parseFEN(fen) {
-  const [pl, turn = 'w', cast = '-'] = fen.split(' ');
+  const [pl, turn = 'w', cast = '-', ep = '-'] = fen.split(' ');
   const b = Array(64).fill(null);
   pl.split('/').forEach((row, i) => {
     let f = 0;
@@ -308,7 +308,7 @@ function parseFEN(fen) {
       else { b[r * 8 + f] = { t: ch.toUpperCase(), c: ch === ch.toUpperCase() ? 'w' : 'b', id: PID++ }; f++; }
     }
   });
-  return { b, turn, cast: { K: cast.includes('K'), Q: cast.includes('Q'), k: cast.includes('k'), q: cast.includes('q') } };
+  return { b, turn, ep: ep === '-' ? -1 : sqIdx(ep), cast: { K: cast.includes('K'), Q: cast.includes('Q'), k: cast.includes('k'), q: cast.includes('q') } };
 }
 
 const KN = [[1, 2], [2, 1], [-1, 2], [-2, 1], [1, -2], [2, -1], [-1, -2], [-2, -1]];
@@ -359,6 +359,8 @@ function pseudo(st) {
         if (!on(f + df, r1)) continue;
         const q = b[r1 * 8 + f + df];
         if (q && q.c !== c) ms.push({ from: s, to: r1 * 8 + f + df, promo: r1 === last ? 'Q' : null });
+        // на проходе: клетка, через которую только что перепрыгнула пешка соперника
+        else if (!q && r1 * 8 + f + df === st.ep && r1 === (c === 'w' ? 5 : 2)) ms.push({ from: s, to: st.ep, ep: true });
       }
     } else if (p.t === 'N' || p.t === 'K') {
       for (const [df, dr] of (p.t === 'N' ? KN : KG)) {
@@ -397,6 +399,7 @@ function makeMove(st, m) {
   const b = st.b.slice(), p = b[m.from], c = p.c, cast = { ...st.cast };
   b[m.to] = m.promo ? { t: m.promo, c, id: PID++ } : p;
   b[m.from] = null;
+  if (m.ep) b[m.to + (c === 'w' ? -8 : 8)] = null;
   if (m.castle) {
     const base = c === 'w' ? 0 : 56;
     if (m.castle === 'K') { b[base + 5] = b[base + 7]; b[base + 7] = null; }
@@ -407,7 +410,8 @@ function makeMove(st, m) {
     if (s === 0) cast.Q = false; if (s === 7) cast.K = false;
     if (s === 56) cast.q = false; if (s === 63) cast.k = false;
   }
-  return { b, turn: opp(c), cast };
+  const ep = p.t === 'P' && Math.abs(m.to - m.from) === 16 ? (m.from + m.to) / 2 : -1;
+  return { b, turn: opp(c), cast, ep };
 }
 
 function kingSq(st, c) {
@@ -1088,9 +1092,9 @@ async function lessonPawns() {
   setPos('8/8/8/8/8/8/4P3/8 w - -');
   await tell('Пешка ходит только вперёд, на одну клетку. Но первым ходом она может прыгнуть сразу на две!');
   await askMove({ text: 'Нажми на пешку и сходи на две клетки вперёд!', accept: m => mstr(m) === 'e2e4' || 'Это одна клетка. А первым ходом можно на две!', hint: 'e2e4', showFrom: true });
-  G.st.turn = 'w';
+  G.st.turn = 'w'; G.st.ep = -1;
   await askMove({ text: 'А теперь — на одну клетку вперёд.', accept: m => mstr(m) === 'e4e5', hint: 'e4e5' });
-  G.st.turn = 'w';
+  G.st.turn = 'w'; G.st.ep = -1;
   place('e6', 'P', 'b'); place('d6', 'P', 'b');
   await tell('Перед пешкой встала чёрная пешка. Вперёд пешка не бьёт — дальше идти нельзя!', { marks: ['e6'] });
   await tell('Зато пешка бьёт наискосок: на одну клетку вперёд и вбок.', { arrows: [['e5', 'd6', '#ff5a5a'], ['e5', 'f6', '#ff5a5a']] });
@@ -1098,19 +1102,47 @@ async function lessonPawns() {
   setPos('8/8/4p3/2p4p/1P1P2P1/8/8/8 w - -');
   await askMove({ text: 'Найди, какую чёрную пешку можно съесть, и съешь её!', accept: (m, prev) => !!prev.b[m.to] || 'Это не взятие. Пешка бьёт наискосок!', hint: 'g4h5' });
   await tell('Чёрные пешки ходят вниз, навстречу белым. А назад пешки никогда не ходят!');
+
+  // взятие на проходе
+  setPos('8/3p4/8/4P3/8/8/8/8 b - -');
+  await tell('А теперь хитрое правило — взятие на проходе. Смотри на чёрную пешку!');
+  await doMove(mv('d7d5'));
+  await tell('Чёрная пешка прыгнула на две клетки и встала рядом с твоей. Она проскочила клетку d6 — а её бьёт твоя пешка!', { marks: ['d6'], arrows: [['e5', 'd6', '#ff5a5a']] });
+  await askMove({ text: 'Съешь её на проходе: пешку e5 — на d6!', accept: m => !!m.ep || 'Нужно взять на проходе: пешку e5 — на клетку d6.', hint: 'e5d6', showFrom: true });
+  await tell('Твоя пешка встала на d6, а чёрная пешка пропала. Бить на проходе можно только сразу — следующим же ходом!');
+  setPos('8/5p2/8/4P3/8/8/8/8 b - -');
+  await doMove(mv('f7f5'));
+  await askMove({ text: 'Чёрная пешка снова прыгнула на две клетки. Съешь её на проходе!', accept: m => !!m.ep || 'Ищи клетку, которую пешка перепрыгнула, — туда и бей.', hint: 'e5f6' });
+  await tell('Молодец! В пешечном бою это правило тоже работает — и у тебя, и у соперника. Следи за ним!');
+
   await tell('Теперь сыграем в пешечный бой! Кто первым доведёт пешку до конца доски — тот и победил. Ещё можно съесть все пешки соперника.');
+  let lvl = 1;
   for (;;) {
-    const res = await pawnBattle();
-    if (res === 'w') { sfx('win'); setMood('happy', 'hop'); addCoins(15); await tell('Победа! Твоя пешка дошла до конца! Держи 15 монеток!'); }
-    else if (res === 'draw') { addCoins(5); await tell('Ничья! Никто не может ходить. Хорошая игра!'); }
-    else { L.errors += 2; addCoins(2); setMood('sad', 'sad'); await tell('В этот раз выиграли чёрные. Не беда — в следующий раз получится!'); }
-    const again = await userButtons([{ label: '↺ Сыграть ещё', value: 1 }, { label: 'Дальше ▶', cls: 'next', value: 0 }]);
-    if (!again) break;
+    const Lv = PAWN_LEVELS[lvl - 1];
+    const res = await pawnBattle(Lv);
+    if (res === 'w') { sfx('win'); setMood('happy', 'hop'); addCoins(Lv.prize); await tell(`Победа на уровне ${lvl}! Держи ${Lv.prize} ${coinsW(Lv.prize)}!`); }
+    else if (res === 'draw') { addCoins(3); await tell('Ничья! Никто не может ходить. Хорошая игра!'); }
+    else { L.errors += 1; addCoins(1); setMood('sad', 'sad'); await tell('В этот раз выиграли чёрные. Не беда — в следующий раз получится!'); }
+    const btns = [];
+    if (res === 'w' && lvl < 3) btns.push({ label: `▶ Уровень ${lvl + 1}`, cls: 'next', value: 'up' });
+    btns.push({ label: '↺ Ещё раз', value: 'again' });
+    if (res !== 'w' && lvl > 1) btns.push({ label: `◀ Уровень ${lvl - 1}`, value: 'down' });
+    btns.push({ label: 'Закончить ▶', cls: res === 'w' && lvl < 3 ? '' : 'next', value: 'end' });
+    const v = await userButtons(btns);
+    if (v === 'end') break;
+    if (v === 'up') lvl++;
+    if (v === 'down') lvl--;
   }
 }
-async function pawnBattle() {
-  setPos('8/pppppppp/8/8/8/8/PPPPPPPP/8 w - -');
-  say('Ты играешь белыми. Твой ход!');
+// уровни пешечного боя: сколько пешек и насколько хитрит соперник
+const PAWN_LEVELS = [
+  { fen: '8/2ppp3/8/8/8/8/2PPP3/8 w - -', name: 'три пешки, соперник ещё учится', depth: 1, noise: 100, prize: 8 },
+  { fen: '8/1ppppp2/8/8/8/8/1PPPPP2/8 w - -', name: 'пять пешек, соперник посильнее', depth: 1, noise: 10, prize: 12 },
+  { fen: '8/pppppppp/8/8/8/8/PPPPPPPP/8 w - -', name: 'восемь пешек, соперник хитрый', depth: 2, noise: 6, prize: 20 },
+];
+async function pawnBattle(Lv) {
+  setPos(Lv.fen);
+  say(`Уровень ${PAWN_LEVELS.indexOf(Lv) + 1}: ${Lv.name}. Ты играешь белыми. Твой ход!`);
   for (;;) {
     let w = pawnWinner(G.st); if (w) return w;
     const before = material(G.st, 'b');
@@ -1119,7 +1151,7 @@ async function pawnBattle() {
     w = pawnWinner(G.st); if (w) return w;
     await wait(550);
     const mine = material(G.st, 'w');
-    await doMove(pawnAI(G.st));
+    await doMove(pawnAI(G.st, Lv.depth, Lv.noise));
     if (material(G.st, 'w') < mine) { setMood('sad', 'sad'); say(pick(['Ой, нашу пешку съели.', 'Ай! Береги пешки.'])); }
   }
 }
