@@ -202,7 +202,10 @@
   @keyframes heart { to { transform: translateY(-60px) scale(1.4); opacity: 0; } }
   .jar { margin: 8px 12px; background: #fff; border-radius: 20px; padding: 6px 6px 8px; box-shadow: 0 3px 8px #4b3a8f22; }
   .jt { text-align: center; font-weight: 800; font-size: 14px; margin: 2px 0 6px; }
-  .foods { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .foods { display: grid; grid-template-rows: repeat(2, auto); grid-auto-flow: column; grid-auto-columns: calc((100% - 6px * 4) / 4.4); gap: 6px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: none; padding-bottom: 2px; -webkit-mask-image: linear-gradient(90deg, #000 88%, #0000); mask-image: linear-gradient(90deg, #000 88%, #0000); }
+  .foods::-webkit-scrollbar { display: none; }
+  .foods.end { -webkit-mask-image: none; mask-image: none; }
+  .foods .fd { scroll-snap-align: start; }
   .fd { background: #f5f2ff; border: 0; border-radius: 14px; padding: 5px 2px; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
   .fd:active { transform: scale(.95); }
   .fd.poor { opacity: .5; }
@@ -249,6 +252,10 @@
   .res .got svg { width: 28px; height: 28px; }
   .res .row { display: flex; gap: 10px; justify-content: center; }
   .res .row .btn { flex: 1; padding: 13px 8px; white-space: nowrap; }
+  #novoice .res { text-align: left; }
+  #novoice h2 { text-align: center; }
+  #novoice p { margin: 8px 0; font-size: 15px; line-height: 1.35; }
+  #novoice .row { margin-top: 14px; }
 </style>
 </head>
 <body>
@@ -335,6 +342,14 @@
       <div class="stars" id="rStars"></div>
       <div class="got" id="rGot"></div>
       <div class="row"><button class="btn" id="rAgain">↺ Ещё раз</button><button class="btn next" id="rMenu">Дальше ▶</button></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="novoice">
+    <div class="res">
+      <h2>🤐 Леон молчит</h2>
+      <div class="txt"></div>
+      <div class="row"><button class="btn soft" id="nvOff">Не показывать</button><button class="btn next" id="nvOk">Понятно</button></div>
     </div>
   </div>
 </div>
@@ -776,10 +791,10 @@ function sfx(kind) {
       right: [[660, .09, 'sine', .15], [880, .09, 'sine', .15], [1320, .16, 'sine', .12]],
       wrong: [[330, .15, 'triangle', .15], [247, .25, 'triangle', .15]],
       coin: [[1200, .06, 'square', .05], [1600, .12, 'square', .05]],
-      chomp: [[300, .05, 'square', .1], [500, .08, 'sine', .12]],
       pop: [[900, .04, 'sine', .1], [1400, .05, 'sine', .06]],
       win: [[523, .12, 'sine', .15], [659, .12, 'sine', .15], [784, .12, 'sine', .15], [1047, .3, 'sine', .15]],
     }[kind];
+    if (kind === 'chomp') return chomp();
     let t = AC.currentTime;
     for (const [f, d, type, v] of notes) {
       const o = AC.createOscillator(), g = AC.createGain();
@@ -789,18 +804,89 @@ function sfx(kind) {
   } catch (e) {}
 }
 
+// --- букашки: голос, когда выбегают из банки, и хруст, когда их поймали (вариант B из mockups/sounds) ---
+let NB = null;
+function noiseBuf() {
+  if (!NB) { NB = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate); const d = NB.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  return NB;
+}
+// огибающая: подъём a, держим до dur - r, спад r
+function env(g, t, dur, v, a = .01, r = .05) {
+  g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(v, t + a);
+  g.gain.setValueAtTime(v, Math.max(t + a, t + dur - r)); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+}
+// LFO на параметр p: частота hz, размах depth
+function lfo(p, t, dur, hz, depth, type = 'sine') {
+  const l = AC.createOscillator(), lg = AC.createGain(); l.type = type; l.frequency.value = hz; lg.gain.value = depth;
+  l.connect(lg).connect(p); l.start(t); l.stop(t + dur);
+}
+// тон: f или [f0, f1] (скольжение); vib — [Гц, размах Гц], am — [Гц, глубина 0..1], lp — срез фильтра
+function tone(t, dur, f, { type = 'sine', v = .15, a, r, vib, am, lp } = {}) {
+  const o = AC.createOscillator(), g = AC.createGain(), [f0, f1] = Array.isArray(f) ? f : [f, f];
+  o.type = type; o.frequency.setValueAtTime(f0, t); if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  if (vib) lfo(o.frequency, t, dur, ...vib);
+  let n = o;
+  if (lp) { const fl = AC.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = lp; n.connect(fl); n = fl; }
+  if (am) { const ag = AC.createGain(); ag.gain.value = 1 - am[1]; lfo(ag.gain, t, dur, ...am); n.connect(ag); n = ag; }
+  env(g, t, dur, v, a, r); n.connect(g).connect(AC.destination); o.start(t); o.stop(t + dur + .02);
+}
+// шум через полосовой фильтр f (или скольжение [f0, f1]), q — добротность, am — прерывистость [Гц, глубина]
+function noise(t, dur, f, { v = .2, q = 1, a = .005, r, am } = {}) {
+  const sr = AC.createBufferSource(), fl = AC.createBiquadFilter(), g = AC.createGain(), [f0, f1] = Array.isArray(f) ? f : [f, f];
+  sr.buffer = noiseBuf(); sr.loop = true; fl.type = 'bandpass'; fl.Q.value = q;
+  fl.frequency.setValueAtTime(f0, t); if (f1 !== f0) fl.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  let n = fl; sr.connect(fl);
+  if (am) { const ag = AC.createGain(); ag.gain.value = 1 - am[1]; lfo(ag.gain, t, dur, ...am, 'square'); n.connect(ag); n = ag; }
+  env(g, t, dur, v, a, r ?? dur * .4); n.connect(g).connect(AC.destination); sr.start(t, Math.random()); sr.stop(t + dur + .02);
+}
+const ticks = (t, n, gap, f, v = .25, jit = .3) => { for (let i = 0; i < n; i++) noise(t + i * gap * (1 + (Math.random() - .5) * jit), .025, f * (.85 + Math.random() * .3), { v, q: 4, r: .02 }); };
+const BUG_SND = {
+  mosquito: t => tone(t, 1.1, [640, 600], { type: 'sawtooth', v: .035, a: .25, r: .35, vib: [6, 25], lp: 2500 }),
+  fly: t => tone(t, 1, [170, 210], { type: 'sawtooth', v: .07, a: .05, r: .3, vib: [4, 20], am: [180, .35], lp: 1200 }),
+  moth: t => noise(t, .9, 700, { v: .25, q: .8, am: [14, .9] }),
+  bug: t => tone(t, .8, [260, 300], { type: 'sawtooth', v: .05, a: .08, r: .3, am: [120, .3], lp: 1400 }),
+  firefly: t => { tone(t, .6, [2400, 2600], { v: .04, a: .2, r: .35, vib: [7, 60] }); tone(t + .25, .6, [3100, 3000], { v: .03, a: .2, r: .35 }); },
+  bee: t => tone(t, 1.1, [220, 240], { type: 'sawtooth', v: .07, a: .1, r: .35, vib: [3, 12], am: [210, .3], lp: 1600 }),
+  dragon: t => noise(t, .8, 500, { v: .3, q: 1.2, am: [32, .95] }),
+  butter: t => noise(t, 1, 450, { v: .28, q: .7, am: [6, .95] }),
+  ant: t => ticks(t, 10, .07, 4000, .2),
+  louse: t => ticks(t, 12, .06, 2500, .22),
+  worm: t => { noise(t, .35, [500, 900], { v: .2, q: 3 }); noise(t + .4, .35, [900, 500], { v: .2, q: 3 }); },
+  beetle: t => { ticks(t, 6, .1, 1500, .3); tone(t + .1, .5, 120, { type: 'sawtooth', v: .04, am: [60, .5], lp: 600 }); },
+  spider: t => ticks(t, 16, .035, 5000, .16),
+  cater: t => [0, .25, .5].forEach(d => noise(t + d, .2, [600, 1200], { v: .2, q: 4 })),
+  centi: t => ticks(t, 30, .025, 3500, .14, .2),
+  stag: t => { ticks(t, 5, .14, 900, .35); tone(t, .7, 90, { type: 'sawtooth', v: .05, am: [45, .6], lp: 500 }); },
+  snail: t => noise(t, 1, [1200, 400], { v: .18, q: 5, a: .2 }),
+  cricket: t => { for (let k = 0; k < 3; k++) tone(t + k * .3, .18, 4400, { v: .05, a: .01, r: .03, am: [45, 1] }); },
+  hopper: t => { noise(t, .6, 6000, { v: .2, q: 2, am: [28, 1] }); noise(t + .7, .25, 6000, { v: .2, q: 2, am: [28, 1] }); },
+  frog: t => { tone(t, .35, [140, 110], { type: 'sawtooth', v: .1, am: [35, .8], lp: 900 }); tone(t + .45, .35, [150, 115], { type: 'sawtooth', v: .1, am: [35, .8], lp: 900 }); },
+  fish: t => { noise(t, .4, [2500, 800], { v: .25, q: .8 }); [.2, .35, .5].forEach(d => tone(t + d, .07, [600, 1300], { v: .07 })); },
+};
+function bugSfx(type) {
+  if (!S.sound || !BUG_SND[type]) return;
+  try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); BUG_SND[type](AC.currentTime + .03); } catch (e) {}
+}
+// «хрум-хрум»
+function chomp() {
+  const t = AC.currentTime + .01;
+  [0, .16].forEach(d => { noise(t + d, .07, 2200, { v: .4, q: .9, r: .05 }); noise(t + d + .04, .05, 1200, { v: .3, q: 1, r: .04 }); });
+}
+
 // --- голос ---
 const LETTERS = { a: 'а', b: 'бэ', c: 'цэ', d: 'дэ', e: 'е', f: 'эф', g: 'жэ', h: 'аш' };
 const speakable = t => t.replace(/\b([a-h])([1-8])\b/g, (_, l, d) => LETTERS[l] + ' ' + d)
   .replace(/\b([a-h])\b/g, (_, l) => LETTERS[l])  // одна буква — имя вертикали
   .replace(/[\u{1F000}-\u{1FFFF}☀-➿️▶←↺✔✘«»]/gu, '');
-// голос Леона: настоящий мужской, если он есть (Дмитрий в Edge, Павел в Windows, Юрий на iPhone);
+// голос Леона: настоящий мужской, если он есть (Дмитрий в Edge, Павел в Windows, Юрий на iPhone, Александр в RHVoice);
 // у женских голосов есть вариант «пониже» — он и выбран, пока мужского нет (обычно так на Android)
-const MALE = /pavel|павел|dmitr|дмитр|yuri|юрий|maxim|максим|male|мужск/i;
-const RU_NAMES = { Pavel: 'Павел', Irina: 'Ирина', Dmitry: 'Дмитрий', Svetlana: 'Светлана', Yuri: 'Юрий', Milena: 'Милена', Katya: 'Катя' };
+const MALE = /pavel|павел|dmitr|дмитр|yuri|юрий|maxim|максим|aleksandr|artemiy|vitaliy|vsevolod|mikhail|timofey|male|мужск/i;
+const RU_NAMES = { Pavel: 'Павел', Irina: 'Ирина', Dmitry: 'Дмитрий', Svetlana: 'Светлана', Yuri: 'Юрий', Milena: 'Милена', Katya: 'Катя',
+  Aleksandr: 'Александр', Artemiy: 'Артемий', Vitaliy: 'Виталий', Vsevolod: 'Всеволод', Mikhail: 'Михаил', Timofey: 'Тимофей',
+  Anna: 'Анна', Arina: 'Арина', Elena: 'Елена', Tatiana: 'Татьяна', Victoria: 'Виктория' };
 let VARS = [], VAR = null;  // варианты голоса: { v: голос браузера или null, pitch, label }
 function voiceName(v, i) {
-  const known = v.name.match(/Pavel|Irina|Dmitry|Svetlana|Yuri|Milena|Katya/);
+  const known = v.name.match(new RegExp(Object.keys(RU_NAMES).join('|')));
   return known ? RU_NAMES[known[0]] : 'голос ' + (i + 1);
 }
 function pickVoice() {
@@ -830,10 +916,30 @@ function speak(t, who) {
       // у друзей голос всегда выше, чем у Леона
       const p = VAR ? VAR.pitch : .8;
       u.pitch = who === 'pet' ? Math.min(2, p + .85) : p;
-      u.onend = u.onerror = () => res();
+      u.onend = () => res();
+      u.onerror = e => { if (/synthesis-failed|language-unavailable|voice-unavailable/.test(e.error)) noVoice('noru'); res(); };
       speechSynthesis.speak(u);
     } catch (e) { res(); }
   });
+}
+// подсказка взрослому, если говорить нечем: окно без синтеза речи (Telegram и др.) или нет русского голоса
+const NOVOICE = {
+  none: '<p>Здесь браузер не умеет говорить — так бывает, если игра открыта из Telegram или другого приложения.</p><p>Открой игру в Chrome или Яндекс.Браузере.</p>',
+  noru: '<p>На этом устройстве нет русского голоса.</p><p>Поставь бесплатное приложение <b>RHVoice</b> (Google Play, AppGallery или F-Droid), скачай в нём русский голос, например Aleksandr, и выбери RHVoice в настройках: «Специальные возможности → Синтез речи».</p><p>Потом закрой и снова открой браузер.</p>',
+};
+let novoiceShown = false;
+function noVoice(why) {
+  if (novoiceShown || S.noVoiceOff || !S.sound) return;
+  novoiceShown = true;
+  $('#novoice .txt').innerHTML = NOVOICE[why] + '<p>Кнопка 🔊 вверху выключает звук совсем.</p>';
+  $('#novoice').classList.add('on');
+}
+function voiceCheck() {
+  if (!('speechSynthesis' in window)) return noVoice('none');
+  let vs = [];
+  try { vs = speechSynthesis.getVoices(); } catch (e) {}
+  // пустой список ещё не повод: на Android голоса иногда приходят поздно, тогда ловим ошибку в speak()
+  if (vs.length && !vs.some(v => /^ru/i.test(v.lang))) noVoice('noru');
 }
 function say(text, voiceText) {
   const b = document.querySelector('.screen.on .bubble');
@@ -2327,6 +2433,12 @@ function renderFoods() {
   $('#foods').innerHTML = Object.entries(FOODS).map(([k, f]) =>
     `<button class="fd${S.coins < f.price ? ' poor' : ''}" data-f="${k}"><div class="ic"><img src="${ART[k]}" alt=""></div><b>${f.name}</b><span>${COIN}${f.price}</span></button>`).join('');
   $('#foods').querySelectorAll('.fd').forEach(b => b.onclick = () => buyFood(b.dataset.f));
+  const fs = $('#foods');
+  if (!fs.dataset.scroll) {  // колесо мыши крутит банку вбок; у правого края гасим затухание
+    fs.dataset.scroll = 1;
+    fs.addEventListener('wheel', e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { fs.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
+    fs.addEventListener('scroll', () => fs.classList.toggle('end', fs.scrollLeft + fs.clientWidth >= fs.scrollWidth - 4));
+  }
 }
 function renderFriends() {
   $('#friends').innerHTML = PETS.map(p => {
@@ -2684,6 +2796,7 @@ async function terraFeed(type) {
   const sy = mv === 'fly' ? rnd(10, H * .4) : mv === 'swim' ? -30 : ly;
   leon.style.transform = '';
   const b = critter(box, type, mv, sx, sy, [lx, ly]);
+  bugSfx(type);
   await b.arrived;
   await pause(150);
   [lx, ly] = [b.x, b.y];
@@ -2748,8 +2861,11 @@ $('#reset').onclick = () => {
   for (const k of ['owned', 'wear', 'malon']) delete S[k];
   Object.assign(S, FRESH()); save(); shop();
 };
+$('#nvOk').onclick = () => { sfx('tap'); $('#novoice').classList.remove('on'); };
+$('#nvOff').onclick = () => { S.noVoiceOff = true; save(); $('#novoice').classList.remove('on'); };
 $('#snd').textContent = S.sound ? '🔊' : '🔇';
 menu();
+setTimeout(voiceCheck, 2500);
 </script>
 </body>
 </html>

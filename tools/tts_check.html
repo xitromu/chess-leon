@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Проверка голоса</title>
+<style>
+  body { font: 16px system-ui, sans-serif; margin: 12px; background: #f5f2ff; color: #222; }
+  button { font: inherit; font-weight: 700; padding: 12px 14px; margin: 4px 4px 4px 0; border: 0; border-radius: 12px; background: #6c5ce7; color: #fff; }
+  pre { white-space: pre-wrap; background: #fff; padding: 10px; border-radius: 10px; font-size: 13px; }
+</style></head><body>
+<h3>Проверка голоса — Шахматы с Леоном</h3>
+<p>Нажми кнопки по очереди, потом сделай снимок экрана и пришли его.</p>
+<button id="b1">1. Пик</button><button id="b2">2. Сказать (как есть)</button><button id="b3">3. Сказать русским голосом</button><button id="b4">4. Как в игре</button>
+<pre id="log"></pre>
+<script>
+const L = s => { log.textContent += s + '\n'; };
+L('Браузер: ' + navigator.userAgent);
+L('speechSynthesis есть: ' + ('speechSynthesis' in window));
+L('SpeechSynthesisUtterance есть: ' + ('SpeechSynthesisUtterance' in window));
+let shown = false;
+function voices(tag) {
+  let vs = [];
+  try { vs = speechSynthesis.getVoices(); } catch (e) { L('getVoices ошибка: ' + e); return []; }
+  const ru = vs.filter(v => /^ru/i.test(v.lang));
+  L(`[${tag}] голосов всего: ${vs.length}, русских: ${ru.length}`);
+  if (!shown && vs.length) { shown = true; vs.slice(0, 40).forEach(v => L('  ' + v.lang + ' · ' + v.name + (v.localService ? '' : ' (сеть)') + (v.default ? ' ★' : ''))); }
+  return ru;
+}
+if ('speechSynthesis' in window) {
+  voices('сразу');
+  speechSynthesis.onvoiceschanged = () => voices('onvoiceschanged');
+  setTimeout(() => voices('через 3 с'), 3000);
+}
+function talk(tag, voice, cancel) {
+  if (!('speechSynthesis' in window)) return L(tag + ': синтеза речи в этом окне нет');
+  try {
+    if (cancel) speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance('Привет! Я Леон. Хочешь поиграть?');
+    u.lang = 'ru-RU'; if (voice) u.voice = voice; u.rate = cancel ? 1.6 : 1;
+    const t0 = Date.now();
+    u.onstart = () => L(tag + ': начал говорить');
+    u.onend = () => L(tag + ': закончил за ' + ((Date.now() - t0) / 1000).toFixed(1) + ' с');
+    u.onerror = e => L(tag + ': ошибка ' + (e.error || e));
+    speechSynthesis.speak(u);
+    L(tag + ': отправлено' + (voice ? ' (' + voice.name + ')' : ''));
+    setTimeout(() => L(tag + ': через 4 с — speaking=' + speechSynthesis.speaking + ', pending=' + speechSynthesis.pending), 4000);
+  } catch (e) { L(tag + ': исключение ' + e); }
+}
+b1.onclick = () => {
+  try { const AC = new (window.AudioContext || window.webkitAudioContext)(); const o = AC.createOscillator(), g = AC.createGain();
+    o.frequency.value = 660; g.gain.value = .2; o.connect(g).connect(AC.destination); o.start(); o.stop(AC.currentTime + .3); L('1: пик отправлен (state=' + AC.state + ')'); }
+  catch (e) { L('1: ошибка ' + e); }
+};
+b2.onclick = () => talk('2', null, false);
+b3.onclick = () => { const ru = voices('кнопка 3'); talk('3', ru[0], false); };
+b4.onclick = () => { const ru = voices('кнопка 4'); talk('4', ru[0], true); };
+</script></body></html>

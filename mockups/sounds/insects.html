@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Звуки букашек</title>
+<style>
+  body { font: 16px system-ui, sans-serif; margin: 0; padding: 12px 12px 40px; background: #efeaff; color: #2a1f5a; }
+  h1 { font-size: 20px; margin: 4px 0 6px; }
+  p { margin: 4px 0 12px; font-size: 14px; }
+  h2 { font-size: 16px; margin: 18px 0 6px; }
+  .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; }
+  .row { background: #fff; border-radius: 14px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 6px #4b3a8f22; }
+  .row b { flex: 1; font-size: 15px; }
+  .row i { font-style: normal; font-size: 12px; color: #4b3a8f99; display: block; font-weight: 400; }
+  button { font: inherit; font-weight: 800; border: 0; border-radius: 12px; padding: 10px 14px; cursor: pointer; background: #6c5ce7; color: #fff; }
+  button.b { background: #2c9846; }
+  button.c { background: #e17055; }
+  button:active { transform: scale(.95); }
+</style></head><body>
+<h1>🐞 Звуки букашек — образец</h1>
+<p>У каждой букашки два варианта: <b style="color:#6c5ce7">A</b> — мультяшный, <b style="color:#2c9846">B</b> — похожий на настоящий. Звук играет, когда букашка выбегает из банки. Выбери, какой нравится (можно разный для разных букашек), и что звучит плохо.</p>
+
+<h2>Летают</h2><div class="list" id="fly"></div>
+<h2>Ползают</h2><div class="list" id="crawl"></div>
+<h2>Прыгают, плавают</h2><div class="list" id="hop"></div>
+<h2>Хруст, когда Леон поймал</h2>
+<p>Сейчас в игре — вариант «как сейчас».</p>
+<div class="list" id="chomp"></div>
+
+<script>
+let AC;
+const ac = () => (AC = AC || new (window.AudioContext || window.webkitAudioContext)());
+const OUT = () => { const c = ac(); if (!c._m) { c._m = c.createGain(); c._m.gain.value = .9; c._m.connect(c.destination); } return c._m; };
+let NB;
+function noiseBuf() { const c = ac(); if (!NB) { NB = c.createBuffer(1, c.sampleRate * 2, c.sampleRate); const d = NB.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; } return NB; }
+// огибающая: подъём a, держим до dur - r, спад r
+function env(g, t, dur, v, a = .01, r = .05) {
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + a);
+  g.gain.setValueAtTime(v, Math.max(t + a, t + dur - r)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+}
+// тон: f или [f0, f1] (скольжение), vib — [скорость, глубина Гц], am — [скорость, глубина 0..1]
+function tone(t, dur, f, { type = 'sine', v = .15, a, r, vib, am, lp } = {}) {
+  const c = ac(), o = c.createOscillator(), g = c.createGain();
+  o.type = type;
+  const [f0, f1] = Array.isArray(f) ? f : [f, f];
+  o.frequency.setValueAtTime(f0, t); if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  if (vib) { const l = c.createOscillator(), lg = c.createGain(); l.frequency.value = vib[0]; lg.gain.value = vib[1]; l.connect(lg).connect(o.frequency); l.start(t); l.stop(t + dur); }
+  let node = o;
+  if (lp) { const fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = lp; node.connect(fl); node = fl; }
+  if (am) {
+    const ag = c.createGain(); ag.gain.value = 1 - am[1];
+    const l = c.createOscillator(), lg = c.createGain(); l.frequency.value = am[0]; lg.gain.value = am[1]; l.connect(lg).connect(ag.gain); l.start(t); l.stop(t + dur);
+    node.connect(ag); node = ag;
+  }
+  env(g, t, dur, v, a, r); node.connect(g).connect(OUT()); o.start(t); o.stop(t + dur + .02);
+}
+// шум через фильтр: f или [f0, f1], q — добротность
+function noise(t, dur, f, { v = .2, q = 1, type = 'bandpass', a = .005, r, am } = {}) {
+  const c = ac(), s = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain();
+  s.buffer = noiseBuf(); s.loop = true; fl.type = type; fl.Q.value = q;
+  const [f0, f1] = Array.isArray(f) ? f : [f, f];
+  fl.frequency.setValueAtTime(f0, t); if (f1 !== f0) fl.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  let node = fl; s.connect(fl);
+  if (am) { const ag = c.createGain(); ag.gain.value = 1 - am[1]; const l = c.createOscillator(), lg = c.createGain(); l.type = 'square'; l.frequency.value = am[0]; lg.gain.value = am[1]; l.connect(lg).connect(ag.gain); l.start(t); l.stop(t + dur); node.connect(ag); node = ag; }
+  env(g, t, dur, v, a, r ?? dur * .4); node.connect(g).connect(OUT()); s.start(t, Math.random()); s.stop(t + dur + .02);
+}
+const ticks = (t, n, gap, f, v = .25, jitter = .3) => { for (let i = 0; i < n; i++) noise(t + i * gap * (1 + (Math.random() - .5) * jitter), .025, f * (.85 + Math.random() * .3), { v, q: 4, r: .02 }); };
+
+const SND = {
+  // --- летают ---
+  mosquito: { name: 'Комарик', move: 'fly',
+    A: t => tone(t, .9, [820, 760], { type: 'triangle', v: .07, a: .15, r: .3, vib: [9, 40] }),
+    B: t => tone(t, 1.1, [640, 600], { type: 'sawtooth', v: .035, a: .25, r: .35, vib: [6, 25], lp: 2500 }) },
+  fly: { name: 'Муха', move: 'fly',
+    A: t => { tone(t, .45, [230, 260], { type: 'square', v: .05, am: [30, .5], lp: 1500 }); tone(t + .5, .3, [250, 210], { type: 'square', v: .05, am: [30, .5], lp: 1500 }); },
+    B: t => tone(t, 1, [170, 210], { type: 'sawtooth', v: .07, a: .05, r: .3, vib: [4, 20], am: [180, .35], lp: 1200 }) },
+  moth: { name: 'Мотылёк', move: 'fly',
+    A: t => { for (let i = 0; i < 6; i++) tone(t + i * .12, .08, 900 + i * 60, { v: .05 }); },
+    B: t => noise(t, .9, 700, { v: .25, q: .8, am: [14, .9] }) },
+  bug: { name: 'Божья коровка', move: 'fly',
+    A: t => { tone(t, .12, [900, 1400], { v: .1 }); tone(t + .18, .5, [300, 340], { type: 'square', v: .04, am: [25, .5], lp: 1600 }); },
+    B: t => tone(t, .8, [260, 300], { type: 'sawtooth', v: .05, a: .08, r: .3, am: [120, .3], lp: 1400 }) },
+  firefly: { name: 'Светлячок', move: 'fly',
+    A: t => [1568, 2093, 2637, 2093].forEach((f, i) => tone(t + i * .13, .25, f, { v: .06, r: .2 })),
+    B: t => { tone(t, .6, [2400, 2600], { v: .04, a: .2, r: .35, vib: [7, 60] }); tone(t + .25, .6, [3100, 3000], { v: .03, a: .2, r: .35 }); } },
+  bee: { name: 'Пчёлка', move: 'fly',
+    A: t => tone(t, .9, [280, 320], { type: 'square', v: .05, a: .05, r: .3, vib: [5, 25], am: [40, .4], lp: 1800 }),
+    B: t => tone(t, 1.1, [220, 240], { type: 'sawtooth', v: .07, a: .1, r: .35, vib: [3, 12], am: [210, .3], lp: 1600 }) },
+  dragon: { name: 'Стрекоза', move: 'fly',
+    A: t => { tone(t, .5, [500, 900], { type: 'triangle', v: .06, am: [35, .7] }); tone(t + .5, .3, [900, 600], { type: 'triangle', v: .05, am: [35, .7] }); },
+    B: t => noise(t, .8, 500, { v: .3, q: 1.2, am: [32, .95] }) },
+  butter: { name: 'Бабочка', move: 'fly',
+    A: t => [1047, 1319, 1568, 1319, 1047].forEach((f, i) => tone(t + i * .14, .22, f, { v: .05, r: .18 })),
+    B: t => noise(t, 1, 450, { v: .28, q: .7, am: [6, .95] }) },
+  // --- ползают ---
+  ant: { name: 'Муравьишка', move: 'crawl',
+    A: t => [0, .12, .24, .36].forEach((d, i) => tone(t + d, .06, 1200 + (i % 2) * 200, { v: .07 })),
+    B: t => ticks(t, 10, .07, 4000, .2) },
+  louse: { name: 'Мокрица', move: 'crawl',
+    A: t => [0, .15, .3].forEach(d => tone(t + d, .08, [700, 500], { v: .08 })),
+    B: t => ticks(t, 12, .06, 2500, .22) },
+  worm: { name: 'Червячок', move: 'crawl',
+    A: t => { tone(t, .35, [300, 500], { v: .12, vib: [6, 30] }); tone(t + .38, .35, [450, 280], { v: .12, vib: [6, 30] }); },
+    B: t => { noise(t, .35, [500, 900], { v: .2, q: 3 }); noise(t + .4, .35, [900, 500], { v: .2, q: 3 }); } },
+  beetle: { name: 'Жучок', move: 'crawl',
+    A: t => { tone(t, .1, 400, { type: 'square', v: .06, lp: 1500 }); tone(t + .15, .1, 330, { type: 'square', v: .06, lp: 1500 }); tone(t + .3, .25, [280, 240], { type: 'square', v: .05, lp: 1500 }); },
+    B: t => { ticks(t, 6, .1, 1500, .3); tone(t + .1, .5, 120, { type: 'sawtooth', v: .04, am: [60, .5], lp: 600 }); } },
+  spider: { name: 'Паучок', move: 'crawl',
+    A: t => [0, .07, .14, .21, .28, .35, .42, .49].forEach((d, i) => tone(t + d, .04, 1500 + (i % 4) * 150, { v: .06 })),
+    B: t => ticks(t, 16, .035, 5000, .16) },
+  cater: { name: 'Гусеница', move: 'crawl',
+    A: t => [0, .2, .4].forEach(d => tone(t + d, .16, [350, 550], { v: .1 })),
+    B: t => [0, .25, .5].forEach(d => noise(t + d, .2, [600, 1200], { v: .2, q: 4 })) },
+  centi: { name: 'Сороконожка', move: 'crawl',
+    A: t => { for (let i = 0; i < 14; i++) tone(t + i * .045, .03, 1400 + (i % 3) * 200, { v: .05 }); },
+    B: t => ticks(t, 30, .025, 3500, .14, .2) },
+  stag: { name: 'Жук-олень', move: 'crawl',
+    A: t => { tone(t, .2, [200, 160], { type: 'square', v: .08, lp: 900 }); tone(t + .3, .2, [180, 140], { type: 'square', v: .08, lp: 900 }); tone(t + .55, .08, 900, { v: .08 }); tone(t + .65, .08, 900, { v: .08 }); },
+    B: t => { ticks(t, 5, .14, 900, .35); tone(t, .7, 90, { type: 'sawtooth', v: .05, am: [45, .6], lp: 500 }); } },
+  snail: { name: 'Улитка', move: 'slow',
+    A: t => tone(t, 1, [500, 250], { v: .1, a: .2, vib: [3, 20] }),
+    B: t => noise(t, 1, [1200, 400], { v: .18, q: 5, a: .2 }) },
+  // --- прыгают, плавают ---
+  cricket: { name: 'Сверчок', move: 'hop',
+    A: t => { for (let k = 0; k < 2; k++) for (let i = 0; i < 3; i++) tone(t + k * .35 + i * .06, .045, 3200, { v: .07, r: .02 }); },
+    B: t => { for (let k = 0; k < 3; k++) tone(t + k * .3, .18, 4400, { v: .05, a: .01, r: .03, am: [45, 1] }); } },
+  hopper: { name: 'Кузнечик', move: 'hop',
+    A: t => { tone(t, .2, [300, 900], { v: .12 }); for (let i = 0; i < 4; i++) tone(t + .3 + i * .07, .05, 2500, { v: .06 }); },
+    B: t => { noise(t, .6, 6000, { v: .2, q: 2, am: [28, 1] }); noise(t + .7, .25, 6000, { v: .2, q: 2, am: [28, 1] }); } },
+  frog: { name: 'Лягушка', move: 'hop',
+    A: t => { tone(t, .22, [180, 320], { type: 'square', v: .08, lp: 1200 }); tone(t + .3, .22, [180, 320], { type: 'square', v: .08, lp: 1200 }); },
+    B: t => { tone(t, .35, [140, 110], { type: 'sawtooth', v: .1, am: [35, .8], lp: 900 }); tone(t + .45, .35, [150, 115], { type: 'sawtooth', v: .1, am: [35, .8], lp: 900 }); } },
+  fish: { name: 'Рыбка', move: 'swim',
+    A: t => [0, .15, .32].forEach((d, i) => tone(t + d, .1, [400 + i * 150, 1100 + i * 200], { v: .1 })),
+    B: t => { noise(t, .4, [2500, 800], { v: .25, q: .8 }); [.2, .35, .5].forEach(d => tone(t + d, .07, [600, 1300], { v: .07 })); } },
+};
+
+const CHOMP = {
+  'Как сейчас': t => { tone(t, .05, 300, { type: 'square', v: .1, r: .03 }); tone(t + .045, .08, 500, { v: .12, r: .05 }); },
+  'Хрум-хрум': t => { [0, .16].forEach(d => { noise(t + d, .07, 2200, { v: .4, q: .9, r: .05 }); noise(t + d + .04, .05, 1200, { v: .3, q: 1, r: .04 }); }); },
+  'Ам! + ням': t => { tone(t, .08, [200, 120], { type: 'square', v: .1, lp: 1200 }); noise(t + .02, .06, 1800, { v: .3, q: 1 }); tone(t + .2, .12, [600, 900], { v: .08 }); tone(t + .34, .12, [700, 1000], { v: .07 }); },
+  'Глоть': t => { tone(t, .18, [700, 180], { v: .15 }); noise(t, .05, 1500, { v: .25, q: 1 }); },
+};
+
+function play(fn) { const c = ac(); if (c.state === 'suspended') c.resume(); fn(c.currentTime + .03); }
+for (const [k, s] of Object.entries(SND)) {
+  const box = document.getElementById(s.move === 'fly' ? 'fly' : s.move === 'crawl' || s.move === 'slow' ? 'crawl' : 'hop');
+  const row = document.createElement('div'); row.className = 'row';
+  row.innerHTML = `<b>${s.name}</b><button>A</button><button class="b">B</button>`;
+  const [a, b] = row.querySelectorAll('button');
+  a.onclick = () => play(s.A); b.onclick = () => play(s.B);
+  box.appendChild(row);
+}
+for (const [name, fn] of Object.entries(CHOMP)) {
+  const row = document.createElement('div'); row.className = 'row';
+  row.innerHTML = `<b>${name}</b><button class="c">▶</button>`;
+  row.querySelector('button').onclick = () => play(fn);
+  document.getElementById('chomp').appendChild(row);
+}
+</script></body></html>
