@@ -39,6 +39,7 @@
     box-shadow: 0 3px 10px #4b3a8f22; min-height: 48px; cursor: pointer;
   }
   .bubble:empty { visibility: hidden; }
+  .leon, .tleon { cursor: pointer; }  /* без этого iOS не доносит нажатие на Леона до обработчика на document */
 
   /* меню: сцена с Леоном, друзьями и подарками */
   .hero { display: flex; flex-direction: column; gap: 8px; padding: 4px 12px 2px; }
