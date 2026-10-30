@@ -266,6 +266,8 @@
   .item.own span { color: #2c9846; }
   .item.on { outline: 4px solid #ffb300; }
   .item.poor { opacity: .55; }
+  .vrow { display: block; width: 100%; box-sizing: border-box; border: 0; border-radius: 12px; padding: 7px 10px; font-size: 13px; font-weight: 700; line-height: 1.25; color: #3d2f7a; background: #ffffffb8; box-shadow: 0 1px 4px #4b3a8f22; cursor: pointer; }
+  #shop .vrow { width: auto; margin: 14px 12px 0; width: calc(100% - 24px); }
   .vbtn { display: block; margin: 16px auto 0; font-size: 16px; padding: 10px 18px; }
   .tiny { margin: 22px auto 8px; display: block; border: 0; background: none; color: #4b3a8f88; font-size: 13px; text-decoration: underline; cursor: pointer; }
 
@@ -302,6 +304,7 @@
       <div class="bubble"></div>
       <div class="stage"></div>
       <button class="feedbtn" id="toTerra">🌿 Покормить</button>
+      <button class="vrow"></button>
     </div>
     <div class="cards" id="cards"></div>
   </section>
@@ -335,6 +338,7 @@
     <div class="items" id="items"></div>
     <div class="colors" id="colors"></div>
     <div class="colors" id="bcolors"></div>
+    <button class="vrow"></button>
     <button class="btn soft vbtn" id="voiceBtn">🗣 Голос</button>
     <button class="tiny" id="reset">Сбросить прогресс</button>
   </section>
@@ -963,11 +967,88 @@ function pickVoice() {
   if (vb) vb.textContent = '🗣 Голос: ' + VAR.label;
 }
 if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
-function speak(t, who) {
+// ===================== Голос: запись или синтез устройства =====================
+// Фраза режется на кусочки: текст, имена клеток и числа (voiceParts). Если есть запись всех кусочков и её можно получить
+// (скачана на устройство или есть интернет), говорит запись; иначе — синтез речи устройства. Что работает сейчас — в строке .vrow.
+// VOICE START (вписывает tools/voice_build.py)
+const VOICE_KEYS = new Set('100a556b 1015a11d 10299dac 10317a4e 10324b 10ae45f0 10b2c43f 10c4330 10d7ff02 10fec0a 1119b854 118573b1 11897788 11cef53 11f7f2c9 1251cf32 1253ff0b 12581078 12c31123 132162fb 13636d6f 13d94d0 140cf865 1443b4c5 14770aad 14e1960f 14f3522a 15131ac3 1533216a 1534b84 154ed620 159f3f91 15ecb72d 1646daf7 16a5ebff 16dce8a5 1726b5d2 176b14ea 1796401f 17d016e2 17e43dcf 1820881f 183092ec 18446cbf 18836621 18b69a14 18dbf5be 18efb63e 1930dccb 193dbe6d 19424368 19549625 197befeb 197e7172 1a6867a2 1a87e6e9 1aa27b5b 1aab044b 1ab4b996 1acebfb4 1aef741d 1b28ddf7 1b29d137 1b67d5e3 1c32791 1c35f7c6 1c883cb5 1c8b51b7 1ca0a1d6 1d87f65 1d89d603 1dc665e8 1dc794d1 1ddbd776 1e168086 1e393c6d 1e48d78 1e6d1ab9 1e9ee2d4 1ed12a53 1ed72f15 1f0c976a 1f3868a 1f3d5c3 1f802259 1fe00164 20031aa0 2005efe1 20581ce6 20910946 20eddf7a 214204f4 21734e67 218f855e 219cd706 219eeb0a 21f2a202 22872eae 22dd4ca5 22e8cca4 232b56d3 23449933 2345268 23810255 2395f32a 23a550ea 23e6aa06 24b96a64 24f8d126 2540510a 25a8daaf 264509d2 2648551a 2680899e 26885113 270a9713 27278f0f 27508fd1 2773dd75 2787ec95 279569b9 27e8ec5 2826a322 28445626 286fcfa3 28824c80 28870138 289b656a 28e105c9 29385a1f 295cf46e 298a8d69 29c1ffa 29f1e725 2a5f9da0 2a9de11f 2aaa49bb 2adb9f2 2aed307e 2b02b20c 2b19d 2c126c1 2c60bb89 2c91925d 2ca52dd9 2cf13755 2d0c78d 2d5ccfe3 2d6d7a8c 2d88a9e7 2d8ece85 2deb82c1 2debff6b 2e2b1626 2e3a009e 2e3e4326 2f2b14da 2f56e43b 2f6137b1 2f8c5ba6 2f9284f3 2fbd828b 2fcdc883 2fd23dbf 2ffc86ec 2fff2aea 300167a1 3004bef6 305ae910 307c9383 3080d7e3 30af308b 30cd0b85 30fdd64a 319b808 319f740f 31bb14da 31d90b2 320d80aa 322d80cb 32323b4d 326f4cf0 32d64467 32e1e7e 32e6c9d9 33fee776 3450c503 3454c258 34a258cc 34bad39b 35a9fe2b 35b71841 35f7d4b 36bda133 36ef3cb2 37d6fac0 385e1f62 387bdd0 38c35782 38e34b79 39501b1 39b67395 39db8246 39f9a09b 3a2208ed 3a257bcb 3a36ffcc 3a65ad88 3a6ffd27 3a799086 3a89d83c 3ab9ab3b 3ad8d84a 3ae09042 3af9808 3b187de1 3b395066 3b3fe791 3b442bf8 3b4d5b4f 3ba33655 3be109d4 3be816d4 3c0a4277 3c234193 3c26a3fa 3cab1fe5 3d0a8bb8 3d2d1e5a 3d543180 3d5bce19 3e42f53 3ea19467 3f125a0 3f29d9fd 3f6f8532 3f855472 3fb0fd6a 3fc7a19e 40210046 4070bca6 40e33cc5 4198d5cd 41dcabaf 4201161e 4206c6f8 422ea5 4248cdf8 425cbc83 427dc81d 42e407b1 431dd1e2 43b709b3 43f0a4b4 4424e6bb 4449f61c 45070f2e 452bbbe1 45716daf 45e7e8a3 45ea6656 4643e9f 467d3756 46ab3d28 4711506b 473af5d1 47876731 478b51c 4801bc00 48bad7d9 48dfac4b 490f2cb4 4911f2ac 49314546 495c28c8 49a06f81 49a87991 49ffcf20 4a0085a4 4a2c2e60 4a6d2d01 4a717f4 4a88145b 4aaf76d5 4ac78626 4b54e092 4b738965 4b8bbab3 4bd032c8 4c055eab 4c91c79 4cafb6e8 4cc4b746 4cc4b7ea 4cdc002e 4cf1846d 4d24689a 4d5630c4 4d92c254 4def3820 4e3b2a86 4e49b58a 4e5390e7 4e8c5956 4e8f00c6 4ed8dc02 4f1a35e4 4f3b1f95 4f9db302 505a5597 5065f289 50742cd5 5076d7c3 50b6c3f8 50c68b94 510c1cab 5125bad4 5156b03d 517d80cc 51f36b43 51f7e1f5 521c56d9 5225f3f4 52503745 52a03a9d 52ae528c 53129d0d 531ef5a4 5352a901 537a6421 541b1d47 542533c6 542fa458 5434304c 544cc20d 54685779 5488cc04 548f733b 54b397ba 550e0810 552366ae 552dde5f 55dfe4fe 55f7f510 55fe47a9 56132c09 56455d00 56870c48 569e2df3 56aea93b 56bd1c70 56c33ea5 56cc7c03 56d11efa 56facb52 57022819 571644b5 5717641f 5720746d 57edcb4d 57f67e46 5825b241 58454d3c 584a5878 585b457f 58671c92 5895953e 58aa7b19 58e0a8 58e3e1 58e78f 596620 596621 596622 596623 596624 596625 596627 59662e 596670 596671 596672 596673 596674 596675 596677 59667e 59667f 596b35f9 59ac6ec9 59ac93c2 59fd9606 5a7f42c5 5ac16b50 5ae3ddb8 5b3337ed 5b640066 5b8a34 5bdf9e2 5c767b38 5c98a9dc 5ca1bb0c 5cfc0f31 5cff801e 5d28767b 5d2901f9 5d3aae5e 5d73733a 5d95c0da 5dbc9352 5dce223c 5dcf8499 5e3108cd 5e332aaa 5e7b91b 5e802692 5e87ccdf 5ec8e86d 5ede7128 5f09fce8 5f38a0a9 5f6996fb 5f6f2bed 5fc81b65 5ff564e 602dd3be 607514f1 60807061 61ca7a3b 61d91c4c 61fb2234 6215250 6230d613 62389f7c 624ee62 62618059 62c897dd 631c98e 63344741 6340be4d 636f9631 63c7715b 640166ad 6426b0dd 64444f80 644779c1 644a8f3f 64b16068 65035357 6509f1a4 65132095 655589e9 65772316 6594bd66 65c6589e 6636a4e 66b4e0aa 66b98fdf 66d523f2 670048a3 670b2e1f 675b526 67867716 6794d17 67b76eb6 67ba83a2 67bbd562 67e4782f 68249e 68460efd 688809b0 68d3bc36 68e321cc 6913ee13 6921c1e1 69bdb498 69d0f999 6a9a0c22 6ac9505 6ad5e97 6b4bdc6a 6b5d6a38 6b81c7f1 6b87d24a 6bea46dc 6c3c3dad 6c4fd9e0 6c88b334 6ca736c7 6cccaa53 6cf54e27 6d4308db 6d7e38d6 6db540fd 6dbe86b0 6dc428fe 6dc57fff 6dfa4d86 6e32c653 6e5febb4 6e91bb2d 6ef0407d 6ef29974 6f13b82c 6f2402d3 6f7c9dbf 6ff8a280 7086df2b 709c493e 70e5645e 71199216 7127f7b6 71607da8 717c3a04 71d71527 72343901 72751a02 72a33998 72b282ec 73161bfc 734b5f1e 735c4b3a 736916ef 73812eff 73be217b 73dc9146 73e93e85 74a7cf78 75053c94 7542aac2 7545f5e3 757f3df0 758bab8d 75ad2e45 75cde0 75f8b6d6 76379c71 7640bf96 76866f7 76ae6e07 76e962a6 777a650d 77b95a0f 780984f7 781450ca 78690fd6 78dfef93 7946c43e 79bd1f75 79dc953 79f734f8 7a1d8fda 7a2a0197 7a2aea7c 7a2fadd9 7a3247cb 7a48578a 7a488d6a 7a4b6130 7a4b6133 7ae8354 7af0f7b4 7b583423 7b7600d3 7c4ce192 7c4ce1d4 7c4ce216 7c4ce235 7c4ce277 7c5bfaa4 7c5e239e 7c79cb9a 7cc6573e 7cd8c316 7d1a9ead 7d1cdb66 7d26cd11 7d336137 7dd73745 7e35bef1 7e595557 7e5e3b32 7ea18d92 7eabc5d0 7eec25b2 7efab984 7f501504 7ff1d2ce 802e78ba 80306866 805af10a 806ad110 808a90ff 809a418f 80b38e23 80ecafb7 80f24040 8106e139 81108cfa 8186ec48 819b1504 819ff9b1 81a2a70c 81b48556 81f09afc 82386927 823c4c68 82591a6f 82598d6a 82981c9 829f138c 82b81a8e 831febce 83c82801 83cf8de9 84100127 841f663c 842e72e8 843e0e32 845b5067 84700ead 84764f6e 8479e0e5 8481d083 849c0e5a 84c30c6c 8563c9b3 8577788f 8634c5c 866431d8 86aaea89 870eec8c 873604b8 87827cc7 87a0cfb3 87cae014 87f96c65 8816d402 882ebd20 8844ee3a 885df0b 8860058c 8871f1ec 8890a389 8895a3e4 88b48131 8930c0c5 8931cba 898a694 89f26242 8a00a45f 8a5a0d4b 8a79dd9e 8aad2f22 8ab1ba59 8ad7671 8aeff64c 8babda76 8c04e3d4 8c21d468 8c3ac9ca 8cdb12ef 8d357d48 8d5bbbb6 8d6a30b1 8db7a11c 8dd1de95 8e2bd1a4 8e52263e 8e5f205 8e5f845 8ef086d4 8f125f11 8f6c57a2 8f85cf09 8fb616fd 8fc123b1 8ffef36e 90318596 90dc8106 910bb60f 91d3493d 91d35f1a 91f38677 9253249f 9272014 92bf400b 93130a72 935649a0 93579801 938628fd 93c4be92 94038a8f 941a1567 9452d23b 94c3c23 950ed4ed 95213f3d 952a57b3 9534ff5d 954be48b 9554b58f 9594466a 9603504 964a6fb1 9652acee 96b657db 97209c6 972cf4c 972e4323 97349dab 973abca9 9759c0a6 97d5238e 97ea5566 9857e314 9862c3b3 98fa191 993dc63e 99517b7b 999ee4ee 99c0ec34 99c0f173 99d6b9ef 9a111558 9a23ad91 9a472b3a 9a8eb3c3 9aa227e1 9ad0f9de 9b7abb37 9b9110c2 9bd883f0 9be929df 9beb9bd2 9c19d824 9c343d61 9c9351df 9cb113e8 9cdf20a0 9d1130be 9d6364a0 9d7ba312 9eb0b32d 9ee611ab 9efbe28f 9f25a269 9f45ca41 9f478d49 9f73fa7a 9f816658 9fc8092e 9ffdf3b2 a00d105f a0d170f a0dd86f7 a106b852 a17ec733 a18b0ad8 a1acb62c a1b0b79 a21163f6 a217de12 a218f6d8 a21c0fe3 a237794d a23d955f a269f97a a29dcbe7 a29eb6b1 a2a7397e a3127dd8 a33f9455 a33ff4b6 a3603f7e a3cb423e a4262c30 a43126d2 a43dbc18 a440f2f6 a464d7d1 a4e4fa76 a5082f58 a5648192 a58da971 a5949951 a5ba9bc1 a5d3c09a a5ea5614 a62aeeb3 a62b5bf3 a6afe634 a6d3588e a6e0879d a6e6eb64 a6f17761 a730ea83 a7afe009 a8360aa1 a8e0762a a9657808 a9933bfd a9a1e3bc a9bdeebf aa3c2eb7 aa88e4a1 aab04175 aadd3128 aae2d3ee ab0398c5 ab18b0f9 ab92ac74 ab988c07 aba0e7c4 abd046d0 abedce45 ac36b668 ac47250c ac5effa9 acb84565 acb8ba0d ad12f52d ad44fd92 ad4a162f adbfd5e4 ae374645 ae592c07 ae6b92f aeb78317 aebc5b80 af366deb af8892c4 af95d87d afdd8c79 aff4aa48 b0189bed b023929 b02821f6 b0351aa2 b0b71588 b115bd0c b11d1a44 b185148b b20109df b21d98d7 b28ca65d b2a5bcbc b2d3abcc b3018218 b314e3ec b35fd5ca b3764e59 b377e2b6 b393e464 b3e6da9 b3ef4090 b40f9836 b42f6970 b43a54ba b4b31a7d b4d8bf03 b5713d5e b589ea69 b6035ad0 b639362e b67801ea b6928bb2 b69371ed b6a2e6af b6ec49a5 b714a2aa b756020 b75c434 b75cef8 b76779bf b767a6f b768248 b768e4b b7b5e69d b7b8af6e b7cadcd5 b7cdfa1e b83653ce b862a11 b862a12 b862a13 b862a14 b862a15 b862a16 b862a17 b862a18 b862a50 b862a51 b862a53 b862a54 b862a55 b862a56 b862a57 b862a5a b862a70 b862a72 b862a73 b862a74 b862a75 b862a76 b862a77 b862a79 b862a90 b862a91 b862a92 b862a93 b862a95 b862a96 b862a97 b862a9c b862ab0 b862ab1 b862ab2 b862ab4 b862ab5 b862ab6 b862ab7 b862abb b862af0 b862af1 b862af2 b862af3 b862af4 b862af6 b862af7 b862afd b862b30 b862b31 b862b32 b862b33 b862b34 b862b35 b862b36 b862b3f b862bd6 b862bd8 b862bd9 b862bda b862bdb b862bdc b862bdd b862bdf b8630c2 b863161 b863440 b863445 b863482 b863487 b8634a1 b8634a4 b8634c1 b8634c5 b8634e3 b8634e6 b863520 b863525 b863527 b863566 b863567 b86360e b86366f b90c75d1 b91de0c1 ba24db90 ba2dffe0 ba60d0b4 ba6cf4e ba81f36c bad1909 bb624d5f bb6e2e05 bbfccd3a bc32debc bc617384 bc6d6c4f bc9e3ecd bcac005c bcb289f1 bd0e5ef bd28513a be255bcd be2dd1de be68d4fe bebdecae bee04aa bf1c892d bf4d7b0f bf6fb060 bf83714e bf869fe1 bff5c023 c02ca278 c0347305 c0773238 c0add01b c0ca1b70 c0da9aca c0dc13f7 c0e0807f c0eef016 c0f2303 c0fbae57 c0ff742d c123c1ae c184ae3b c195fe14 c1a1d8ed c2356f58 c24a6bc0 c27d99b1 c290d5ee c2ad5c22 c2b158e5 c2bb9019 c2beb695 c2e59a1e c3225fad c3225fde c3602ceb c368c0b8 c368c0b9 c4051fb5 c41803ef c47200b2 c4f05c78 c5017448 c530c0e0 c555b102 c566daf8 c5a1e4b3 c5cc3911 c65b4c89 c67313e4 c67b081d c6a0d62c c6bafcde c6d27d26 c70db48f c7a167e0 c7a8bec5 c7b8cdc8 c7ba455a c7c705c2 c8161b07 c835481d c88e9452 c88fe4f2 c8b0e11c c8d13ede c9216571 c95d9eb4 c9613cfe c96540df c9b7e664 c9e58265 c9f69bde ca01f805 ca041388 ca7541e6 cacee338 cadced98 cb6caa2c cb98a50b cbcf33b5 cbd176d4 cbda7b44 cc246dd cc939863 ccc947d ccf87264 cd02db7a cd88b79c cd8d90a ce245211 ce406979 ce62e49e ce9340f3 ceda5b8e cee663c4 cf4108f2 d0a36a84 d0f20c00 d1077199 d119f372 d125a30a d13321ff d136f9ed d150ab48 d1767f4d d1e1ed34 d250d066 d25f20d9 d273e60a d27b6628 d2863680 d2890ac d2aba260 d2d35d41 d2f8a2d6 d32d711b d3727027 d3ce80df d44098b6 d44135d9 d4582d16 d4c509f5 d522b866 d535ac3d d59bb68a d59bb694 d5b0dc49 d5be4e86 d5d03b63 d683c5d7 d6a78dd0 d7a5021d d88a971c d8c87925 d8db30b7 d9676984 d972a4d6 d97cbaea d9eef6e9 da24097 da279ad1 da532953 da57a63 da6ad6ac daf4756c db13f49b db2c3d9c db43cf50 db44cb67 db6f12bf db7399d1 dba6c0e2 dbb58ebc dbe2e0a6 dbf5f16 dc08c2a dc35b42b dcc73b6a dd2ef445 dd3e8b3f dd488bb0 dd5b2ebf dd701d76 ddae42d2 ddced3b ddd02e0f de480e92 de62740f de70d2b6 deb1c94e dee146a9 df3b6c45 e0746257 e098548b e09a69e0 e0a31228 e0b5f822 e0dff76e e10544d5 e14f3267 e1618245 e16d08ac e17da699 e1914183 e1bde023 e2895f1e e2a2551e e2d576f4 e2dddbd5 e2f9d8db e322626f e323af54 e333bc3 e35a7fa4 e38d5c9 e3a7e15d e40278b0 e4214f24 e43de413 e45c48fc e49a0619 e4eb8b73 e4f989bc e50f5bcd e534a9bc e5cd700d e66ada92 e670c78c e7786c56 e7f5f7af e7faa91e e81fb484 e820822d e84b81a8 e84b9554 e88b48a6 e8a034f e9541d67 e994c61e e9ebfaa6 ea055f3d ea1187fb ea5aadf9 ea7781dd ea7bceef ea8ac5c4 eaa916f9 eae424ef eaf3c799 eb07c7bd eb5ab67c eb960ee5 ec0cc59d ec427516 ecd5c81d ed2762e7 ed3a7f88 edbea546 ee04203a ee2d9ea9 eebc0129 eecbd1d0 eecea57a eedc0d2d eedca5ed ef025394 effbb0fc f0330744 f033f796 f03b46f4 f072d990 f079e85b f08abed0 f0c5e06e f1197dbd f1f2ec1f f206cccb f207f388 f20803c6 f20804ce f2921237 f29b7eae f2d2b657 f2f06e95 f2fda8b4 f37b21fc f3900057 f3e7612 f409c1ce f415d7cd f453a10f f45d1c70 f45dd8f f46a0a9f f4eed54b f522fc4b f5665f91 f59be4fb f5c7154a f6296a6a f65ea0bc f6632481 f728adfe f7369cbd f7536a95 f7b8f56d f7e0d1f4 f7ff46d5 f8154cf4 f827df52 f834ab0 f8f0d6d3 f9127324 f974000f f97bd559 f9a15ed8 f9b37304 f9c67c65 f9cef98d fa219247 fa7d9ce7 fa88a29c fac13ccb facdb2b4 fada2fa0 fb1c12fd fb486974 fb7b0bd2 fbb6fcba fbccd3ee fbcd385b fbebaed3 fc1f09aa fc46088a fc6c8ef5 fce52bb0 fcef0098 fd71d1ec fd85de7c fdb488d0 fe6557c fe8550d3 fea58754 ff0e8e90 ff1303e6 ff5c0f05 ff5cce94 ff61a3af ff81613f ff90e3f4 ffeb04cb'.split(' ').filter(Boolean));
+const VOICE_MB = 16;
+// VOICE END
+const VOICE_URL = location.protocol === 'file:' ? 'https://xitromu.github.io/chess-leon/voice/' : 'voice/';
+const VOICE_CACHE = 'leon-voice-1';
+const vkey = s => { let x = 5381; for (let i = 0; i < s.length; i++) x = (Math.imul(x, 33) ^ s.charCodeAt(i)) >>> 0; return x.toString(16); };
+const VTOKEN = /\b[a-h][1-8]\b|\b[a-h]\b|\d+/g;
+const VFEM = /^\s*(пешк|фигур|клетк|звёзд|звезд|монет|вилк|букаш|мух|ладь|лошад|черепаш)/i;
+function voiceParts(t) {
+  const s = t.replace(/[\u{1F000}-\u{1FFFF}☀-➿️▶←↺✔✘«»]/gu, '').replace(/\s+/g, ' ').trim(), out = [];
+  const chunk = x => { x = x.replace(/^[\s.,:;!?…—–-]+/, '').trim(); if (/[а-яё]/i.test(x)) out.push(x); };
+  let last = 0;
+  for (const m of s.matchAll(VTOKEN)) {
+    chunk(s.slice(last, m.index));
+    const rest = s.slice(m.index + m[0].length);
+    // один и два согласуются со следующим словом: одна пешка, одну монетку, две фигуры
+    out.push('#' + m[0] + ((m[0] === '1' || m[0] === '2') && VFEM.test(rest) ? (m[0] === '1' && /^\s*\S*у\b/i.test(rest) ? 'у' : 'ж') : ''));
+    last = m.index + m[0].length;
+  }
+  chunk(s.slice(last));
+  return out;
+}
+let vSrc = null, vNow = 0, vHow = '', vLoad = 0;
+const vBufs = new Map();
+// замолчать: и запись, и синтез устройства
+function hush() {
+  vNow++;
+  if (vSrc) { try { vSrc.stop(); } catch (e) {} vSrc = null; }
+  try { if ('speechSynthesis' in window && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel(); } catch (e) {}
+}
+// телефоны и планшеты включают звук только после первого касания
+function audioOn() {
+  AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+  // iPad: без этого запись молчит, когда звук устройства выключен (Safari 16.4+)
+  if (navigator.audioSession && navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback';
+  if (AC.state !== 'running') {
+    AC.resume().catch(() => {});
+    const s = AC.createBufferSource();                  // старому iOS для разблокировки нужен звук прямо в касании
+    s.buffer = AC.createBuffer(1, 1, 22050);
+    s.connect(AC.destination);
+    s.start(0);
+  }
+  return AC;
+}
+['pointerdown', 'touchend', 'click'].forEach(k => document.addEventListener(k, () => { try { audioOn(); } catch (e) {} }, { capture: true, passive: true }));
+async function clipGet(tok) {
+  const k = vkey(tok);
+  if (vBufs.has(k)) return vBufs.get(k);
+  const url = VOICE_URL + k + '.mp3';
+  const r = (window.caches && await caches.match(url)) || await fetch(url);
+  if (!r.ok) throw new Error('нет записи ' + tok);
+  const data = await r.arrayBuffer();
+  const buf = await new Promise((ok, no) => AC.decodeAudioData(data, ok, no));   // вид с обратным вызовом понимает и старый Safari
+  vBufs.set(k, buf);
+  if (vBufs.size > 80) vBufs.delete(vBufs.keys().next().value);
+  return buf;
+}
+async function playRecord(parts, who, me) {
+  audioOn();
+  const bufs = await Promise.all(parts.map(clipGet));
+  if (me !== vNow) return;
+  voiceShow(S.voiceDL ? 'disk' : 'net');
+  if (AC.state !== 'running') await Promise.race([AC.resume().catch(() => {}), new Promise(r => setTimeout(r, 300))]);
+  if (AC.state !== 'running') return;                  // ещё не было касания: не ждём его
+  for (const b of bufs) {
+    if (me !== vNow) return;
+    await new Promise(done => {
+      const n = AC.createBufferSource();
+      n.buffer = b; n.playbackRate.value = who === 'pet' ? 1.18 : 1;   // у друзей голос выше, чем у Леона
+      n.connect(AC.destination); n.onended = done; vSrc = n; n.start();
+    });
+  }
+}
+function deviceSpeak(t, who) {
   return new Promise(res => {
-    if (!S.sound || !('speechSynthesis' in window)) return res();
+    if (!('speechSynthesis' in window)) { voiceShow('none'); return res(); }
+    voiceShow('dev');
     try {
-      speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(speakable(t));
       u.lang = 'ru-RU'; if (VAR && VAR.v) u.voice = VAR.v; u.rate = 1.6;
       // у друзей голос всегда выше, чем у Леона
@@ -979,6 +1060,69 @@ function speak(t, who) {
     } catch (e) { res(); }
   });
 }
+function speak(t, who) {
+  hush();
+  const me = vNow;
+  if (!S.sound) { voiceShow(); return Promise.resolve(); }
+  const parts = voiceParts(t);
+  if (parts.length && parts.every(p => VOICE_KEYS.has(vkey(p)))) return playRecord(parts, who, me).catch(() => (me === vNow ? deviceSpeak(t, who) : undefined));
+  return deviceSpeak(t, who);
+}
+// строка «чем говорит Леон»: в меню и в подарках; нажатие — скачать голос на устройство
+function voiceShow(how) {
+  if (how) vHow = how;
+  const can = window.caches && VOICE_KEYS.size && !S.voiceDL && !vLoad && location.protocol !== 'file:';
+  const get = can ? ` · ⬇ Скачать, ${VOICE_MB} МБ` : '';
+  const text = vLoad ? `⬇ Скачиваю голос: ${vLoad - 1}%` : !S.sound ? '🔇 Звук выключен кнопкой 🔊' : {
+    disk: '🎙 Говорит запись: голос скачан на устройство ✓',
+    net: '🎙 Говорит запись из интернета' + get,
+    dev: '🤖 Говорит синтез устройства: записи сейчас нет' + get,
+    none: '🔇 На устройстве нет голоса и записи сейчас нет' + get,
+  }[vHow] || '';
+  document.querySelectorAll('.vrow').forEach(b => { b.textContent = text; });
+  const vb = $('#voiceBtn');
+  if (vb) vb.style.display = vHow === 'dev' ? '' : 'none';   // выбор голоса — только для синтеза устройства
+}
+async function voiceDownload() {
+  if (vLoad || S.voiceDL || !window.caches || !VOICE_KEYS.size || location.protocol === 'file:') return;
+  vLoad = 1; voiceShow();
+  const c = await caches.open(VOICE_CACHE), all = [...VOICE_KEYS];
+  let i = 0, done = 0, bad = 0;
+  // сеть бывает неровной: каждую запись пробуем до трёх раз
+  const fetchClip = async url => {
+    for (let n = 0; ; n++) {
+      try { const r = await fetch(url); if (r.ok) return r; if (n >= 2) throw new Error(url); } catch (e) { if (n >= 2) throw e; }
+      await new Promise(ok => setTimeout(ok, 700));
+    }
+  };
+  const worker = async () => {
+    while (i < all.length) {
+      const url = VOICE_URL + all[i++] + '.mp3';
+      try { if (!await c.match(url)) await c.put(url, await fetchClip(url)); } catch (e) { bad++; }
+      vLoad = 1 + Math.floor(++done / all.length * 100); voiceShow();
+    }
+  };
+  await Promise.all([1, 2, 3, 4, 5, 6].map(worker));
+  vLoad = 0;
+  S.voiceDL = !bad; save();
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  if (S.voiceDL) voiceShow('disk');
+  else { voiceShow(); document.querySelectorAll('.vrow').forEach(b => { b.textContent = '⚠ Скачалось не всё: нужен интернет. Нажми ещё раз.'; }); }
+}
+document.addEventListener('click', e => { if (e.target.closest('.vrow')) voiceDownload(); });
+// при запуске: всё ли ещё лежит на устройстве (система могла почистить, а в новой версии могли появиться новые фразы)
+async function voiceInit() {
+  let have = false;
+  try {
+    if (window.caches && VOICE_KEYS.size && location.protocol !== 'file:') {
+      const urls = new Set((await (await caches.open(VOICE_CACHE)).keys()).map(r => r.url.split('/').pop().replace('.mp3', '')));
+      have = [...VOICE_KEYS].every(k => urls.has(k));
+    }
+  } catch (e) {}
+  if (!!S.voiceDL !== have) { S.voiceDL = have; save(); }
+  voiceShow(vHow || (have ? 'disk' : VOICE_KEYS.size && navigator.onLine ? 'net' : 'dev'));
+}
+if ('serviceWorker' in navigator && window.isSecureContext && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 // подсказка взрослому, если говорить нечем: окно без синтеза речи (Telegram и др.) или нет русского голоса
 const NOVOICE = {
   none: '<p>Здесь браузер не умеет говорить — так бывает, если игра открыта из Telegram или другого приложения.</p><p>Открой игру в Chrome или Яндекс.Браузере.</p>',
@@ -992,6 +1136,7 @@ function noVoice(why) {
   $('#novoice').classList.add('on');
 }
 function voiceCheck() {
+  if (VOICE_KEYS.size && (S.voiceDL || navigator.onLine)) return;   // говорит запись, синтез не нужен
   if (!('speechSynthesis' in window)) return noVoice('none');
   let vs = [];
   try { vs = speechSynthesis.getVoices(); } catch (e) {}
@@ -1214,6 +1359,7 @@ function actions(list) {
 const userButtons = btns => waitable(res => actions(btns.map((b, i) => ({ ...b, onTap: () => { actions([]); res(b.value !== undefined ? b.value : i); } }))));
 
 // ===================== Задания =====================
+// цены и награды подобраны так, чтобы весь контент (1675 монеток) скупался примерно за 80 уроков, с тратами на кормление (30.10.2026)
 async function give(tries, reward = [2, 1], quiet = false) {
   const amt = tries === 0 ? reward[0] : reward[1];
   if (amt) addCoins(amt);
@@ -1263,7 +1409,7 @@ async function askChoice({ text, options, wrong, reward = [2, 1] }) {
   actions([]);
 }
 // hint: строка хода 'e2e4' или функция, возвращающая ход; showFrom — сразу подсветить фигуру
-async function askMove({ text, accept, hint, wrong, wrongText, reward = [3, 1], showFrom = false, color, btns }) {
+async function askMove({ text, accept, hint, wrong, wrongText, reward = [2, 1], showFrom = false, color, btns }) {
   if (text) say(text);
   const hm = () => { const h = typeof hint === 'function' ? hint() : hint; return typeof h === 'string' ? findMove(G.st, h) : h; };
   if (showFrom && hint) { const h = hm(); if (h) marks([h.from], 'hint'); }
@@ -1654,7 +1800,7 @@ async function lessonBattle(lvl) {
   for (;;) {
     const res = await pawnBattle(Lv);
     if (res === 'w') { sfx('win'); setMood('happy', 'hop'); addCoins(Lv.prize); await tell(`Победа! Держи ${Lv.prize} ${coinsW(Lv.prize)}!`); }
-    else if (res === 'draw') { addCoins(3); await tell('Ничья! Никто не может ходить. Хорошая игра!'); }
+    else if (res === 'draw') { addCoins(2); await tell('Ничья! Никто не может ходить. Хорошая игра!'); }
     else { L.errors += 1; addCoins(1); setMood('sad', 'sad'); await tell('В этот раз выиграли чёрные. Не беда — в следующий раз получится!'); }
     say('Сыграем ещё раз или закончим?');
     if (await userButtons([{ label: '↺ Ещё раз', value: 'again' }, { label: 'Закончить ▶', cls: 'next', value: 'end' }]) === 'end') break;
@@ -1662,9 +1808,9 @@ async function lessonBattle(lvl) {
 }
 // уровни пешечного боя: сколько пешек и насколько хитрит соперник
 const PAWN_LEVELS = [
-  { fen: '8/2ppp3/8/8/8/8/2PPP3/8 w - -', name: 'три пешки, соперник ещё учится', depth: 1, noise: 100, prize: 8 },
-  { fen: '8/1ppppp2/8/8/8/8/1PPPPP2/8 w - -', name: 'пять пешек, соперник посильнее', depth: 1, noise: 10, prize: 12 },
-  { fen: '8/pppppppp/8/8/8/8/PPPPPPPP/8 w - -', name: 'восемь пешек, соперник хитрый', depth: 2, noise: 6, prize: 20 },
+  { fen: '8/2ppp3/8/8/8/8/2PPP3/8 w - -', name: 'три пешки, соперник ещё учится', depth: 1, noise: 100, prize: 3 },
+  { fen: '8/1ppppp2/8/8/8/8/1PPPPP2/8 w - -', name: 'пять пешек, соперник посильнее', depth: 1, noise: 10, prize: 4 },
+  { fen: '8/pppppppp/8/8/8/8/PPPPPPPP/8 w - -', name: 'восемь пешек, соперник хитрый', depth: 2, noise: 6, prize: 7 },
 ];
 async function pawnBattle(Lv) {
   setPos(Lv.fen);
@@ -1871,7 +2017,7 @@ async function lessonEnd(fen, intro, tips, done) {
     clearMarks('hint'); arrEl.innerHTML = '';
     await doMove(m);
     const st = status(G.st);
-    if (st === 'mate') { actions([]); sfx('win'); setMood('happy', 'hop'); addCoins(10); await tell(done); return; }
+    if (st === 'mate') { actions([]); sfx('win'); setMood('happy', 'hop'); addCoins(3); await tell(done); return; }
     let bad = null;
     if (st === 'stalemate') bad = 'Ой, это пат! Королю некуда ходить, но шаха нет — это ничья. Давай по-другому!';
     else if (legal(G.st).some(x => G.st.b[x.to])) bad = 'Осторожно! Король может съесть твою фигуру. Поставь её подальше от короля или под защиту.';
@@ -2447,7 +2593,7 @@ const hintTap = getMove => ({ label: '💡 Подсказка', cls: 'soft', onT
 // итог игры; true — ребёнок решил закончить
 async function gameResult(res, prize, [won, draw, lost]) {
   if (res === 'w') { sfx('win'); setMood('happy', 'hop'); addCoins(prize); await tell(`${won} Держи ${prize} ${coinsW(prize)}!`); }
-  else if (res === 'draw') { addCoins(3); await tell(draw); }
+  else if (res === 'draw') { addCoins(2); await tell(draw); }
   else { L.errors += 1; addCoins(1); setMood('sad', 'sad'); await tell(lost); }
   say('Сыграем ещё раз или закончим?');
   return await userButtons([{ label: '↺ Ещё раз', value: 'again' }, { label: 'Закончить ▶', cls: 'next', value: 'end' }]) === 'end';
@@ -2533,18 +2679,18 @@ async function miniGame(levels, intro) {
   }
 }
 const MINI = {
-  R: [{ fen: '8/pp6/8/8/8/8/8/7R w - -', text: 'Ладья против двух пешек. Твой ход!', need: PVP, depth: 1, noise: 8, prize: 6 },
-    { fen: '8/1ppp4/8/8/8/8/8/7R w - -', text: 'Теперь три пешки, и они хитрее! Не попадись им: пешки бьют наискосок.', need: PVP, depth: 2, noise: 4, prize: 10 }],
-  Q: [{ fen: '8/pppppp2/8/8/8/8/8/3Q4 w - -', text: 'Ферзь против шести пешек. Твой ход!', need: PVP, depth: 1, noise: 8, prize: 8 },
-    { fen: '8/pppppppp/8/8/8/8/8/3Q4 w - -', text: 'Ферзь против восьми пешек! Это трудно.', need: PVP, depth: 2, noise: 3, prize: 15 }],
-  N: [{ fen: '8/8/5p2/8/8/8/8/3N4 w - -', text: 'Конь против одной пешки. Поймай её!', need: PVP, depth: 1, noise: 8, prize: 6 },
-    { fen: '8/1p1p4/8/8/8/8/8/2N5 w - -', text: 'Конь против двух пешек! Прыгай хитро.', need: PVP, depth: 2, noise: 4, prize: 10 }],
-  B: [{ fen: '8/1p4p1/8/8/8/8/8/2B5 w - -', text: 'Слон против двух пешек. Твой ход!', need: PVP, depth: 1, noise: 8, prize: 6 },
-    { fen: '8/1p1p4/8/8/8/8/8/2B5 w - -', text: 'Слон против двух пешек, и они хитрее!', need: PVP, depth: 2, noise: 4, prize: 10 }],
-  PN: [{ fen: '6n1/2ppppp1/8/8/8/8/2PPPPP1/6N1 w - -', text: 'Соперник ещё учится. Ты играешь белыми!', need: PVSP, depth: 1, noise: 10, prize: 10 },
-    { fen: '6n1/2ppppp1/8/8/8/8/2PPPPP1/6N1 w - -', text: 'Теперь соперник хитрее. Твой ход!', need: PVSP, depth: 2, noise: 6, prize: 15 }],
-  PR: [{ fen: '7r/4pppp/8/8/8/8/4PPPP/7R w - -', text: 'Соперник ещё учится. Ты играешь белыми!', need: PVSP, depth: 1, noise: 10, prize: 10 },
-    { fen: '7r/4pppp/8/8/8/8/4PPPP/7R w - -', text: 'Теперь соперник хитрее. Твой ход!', need: PVSP, depth: 2, noise: 6, prize: 15 }],
+  R: [{ fen: '8/pp6/8/8/8/8/8/7R w - -', text: 'Ладья против двух пешек. Твой ход!', need: PVP, depth: 1, noise: 8, prize: 2 },
+    { fen: '8/1ppp4/8/8/8/8/8/7R w - -', text: 'Теперь три пешки, и они хитрее! Не попадись им: пешки бьют наискосок.', need: PVP, depth: 2, noise: 4, prize: 4 }],
+  Q: [{ fen: '8/pppppp2/8/8/8/8/8/3Q4 w - -', text: 'Ферзь против шести пешек. Твой ход!', need: PVP, depth: 1, noise: 8, prize: 3 },
+    { fen: '8/pppppppp/8/8/8/8/8/3Q4 w - -', text: 'Ферзь против восьми пешек! Это трудно.', need: PVP, depth: 2, noise: 3, prize: 5 }],
+  N: [{ fen: '8/8/5p2/8/8/8/8/3N4 w - -', text: 'Конь против одной пешки. Поймай её!', need: PVP, depth: 1, noise: 8, prize: 2 },
+    { fen: '8/1p1p4/8/8/8/8/8/2N5 w - -', text: 'Конь против двух пешек! Прыгай хитро.', need: PVP, depth: 2, noise: 4, prize: 4 }],
+  B: [{ fen: '8/1p4p1/8/8/8/8/8/2B5 w - -', text: 'Слон против двух пешек. Твой ход!', need: PVP, depth: 1, noise: 8, prize: 2 },
+    { fen: '8/1p1p4/8/8/8/8/8/2B5 w - -', text: 'Слон против двух пешек, и они хитрее!', need: PVP, depth: 2, noise: 4, prize: 4 }],
+  PN: [{ fen: '6n1/2ppppp1/8/8/8/8/2PPPPP1/6N1 w - -', text: 'Соперник ещё учится. Ты играешь белыми!', need: PVSP, depth: 1, noise: 10, prize: 4 },
+    { fen: '6n1/2ppppp1/8/8/8/8/2PPPPP1/6N1 w - -', text: 'Теперь соперник хитрее. Твой ход!', need: PVSP, depth: 2, noise: 6, prize: 5 }],
+  PR: [{ fen: '7r/4pppp/8/8/8/8/4PPPP/7R w - -', text: 'Соперник ещё учится. Ты играешь белыми!', need: PVSP, depth: 1, noise: 10, prize: 4 },
+    { fen: '7r/4pppp/8/8/8/8/4PPPP/7R w - -', text: 'Теперь соперник хитрее. Твой ход!', need: PVSP, depth: 2, noise: 6, prize: 5 }],
 };
 const MINI_RULES = 'Пешки бегут вниз, к краю доски. Дойдёт хоть одна — выиграли чёрные. Съешь все пешки — победа твоя!';
 
@@ -2831,7 +2977,7 @@ async function gameLeon(fen, intro, blunder) {
   for (let n = 0; ; n++) {
     const res = await gamePlay(fen, blunder);
     if (res === 'stop') { if (!n) L.errors += 5; return; }  // бросил, не доиграв ни одной партии, — одна звезда
-    if (await gameResult(res, 25, ['Мат! Ты победил Леона!', 'Ничья! Хорошая партия.', 'Леон поставил мат. Ничего, сыграем ещё!'])) return;
+    if (await gameResult(res, 8, ['Мат! Ты победил Леона!', 'Ничья! Хорошая партия.', 'Леон поставил мат. Ничего, сыграем ещё!'])) return;
   }
 }
 
@@ -3245,7 +3391,7 @@ function applyBoard() {
 }
 function menu() {
   abortAll(); TAP = MOVE = null; L = null; actions([]);
-  try { speechSynthesis.cancel(); } catch (e) {}
+  hush();
   clearTimeout(moodTimer); MOOD = 'neutral';
   show('menu');
   const c = $('#cards'); c.innerHTML = '';
@@ -3281,7 +3427,9 @@ async function runLesson(def, again) {
 }
 async function finishLesson() {
   const stars = L.errors <= 1 ? 3 : L.errors <= 4 ? 2 : 1;
-  addCoins(stars * 5);
+  // бонус — только за новые звёзды: повтор урока даёт монетки лишь за ответы
+  const fresh = Math.max(0, stars - (S.stars[L.def.id] || 0));
+  if (fresh) addCoins(fresh * 5);
   S.stars[L.def.id] = Math.max(S.stars[L.def.id] || 0, stars); save();
   $('#rStars').innerHTML = '★'.repeat(stars) + `<span class="off">${'★'.repeat(3 - stars)}</span>`;
   $('#rGot').innerHTML = `${COIN} +${L.earned}`;
@@ -3558,7 +3706,7 @@ function friend(id) {
 }
 function terra() {
   abortAll(); TAP = MOVE = null; L = null; actions([]);
-  try { speechSynthesis.cancel(); } catch (e) {}
+  hush();
   show('terra'); buildTerra(); drawTerra(); renderFoods(); renderFriends();
   const g = PET[S.guest];
   say(g ? `Мы с ${g.with} проголодались! Выбирай угощение в банке.` : S.pets.length > 1 ? 'Я проголодался! Выбирай угощение. А друга можно позвать в гости — нажми на него.' : 'Я проголодался! Выбирай угощение в банке.');
@@ -3963,7 +4111,7 @@ $('#terraBack').onclick = () => { sfx('tap'); menu(); };
 $('#back').onclick = () => { sfx('tap'); menu(); };
 $('#toShop').onclick = () => { sfx('tap'); shop(); say('Это мои подарки! Купленный можно показать или спрятать — нажми на него.'); };
 $('#shopBack').onclick = () => { sfx('tap'); menu(); };
-$('#snd').onclick = () => { S.sound = !S.sound; save(); $('#snd').textContent = S.sound ? '🔊' : '🔇'; if (!S.sound) try { speechSynthesis.cancel(); } catch (e) {} };
+$('#snd').onclick = () => { S.sound = !S.sound; save(); $('#snd').textContent = S.sound ? '🔊' : '🔇'; if (!S.sound) hush(); voiceShow(); };
 $('#voiceBtn').onclick = () => {
   pickVoice();
   VAR = VARS[(VARS.indexOf(VAR) + 1) % VARS.length];
@@ -3979,6 +4127,7 @@ $('#reset').onclick = () => {
 $('#nvOk').onclick = () => { sfx('tap'); $('#novoice').classList.remove('on'); };
 $('#nvOff').onclick = () => { S.noVoiceOff = true; save(); $('#novoice').classList.remove('on'); };
 $('#snd').textContent = S.sound ? '🔊' : '🔇';
+voiceInit();
 menu();
 setTimeout(voiceCheck, 2500);
 </script>
