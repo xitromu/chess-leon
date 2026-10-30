@@ -31,6 +31,11 @@ window.BOT = (() => {
     log.push(`? ${text} → ${mstr(h)}`);
     return h;
   };
+  // игры: бот ходит подсказкой, после партии выбирает «Закончить»
+  window.playMove = async (color, hint) => { const h = hint && hint(); if (!h) fail('нет хода-подсказки'); return h; };
+  window.userButtons = async btns => { const e = btns.find(b => b.value === 'end'); return e ? 'end' : btns[0].value !== undefined ? btns[0].value : 0; };
+  // кнопки «Ещё раз / Закончить» после игр (userButtons — const, подменить нельзя): жмём «Закончить»
+  setInterval(() => { const b = [...document.querySelectorAll('#act .btn')].find(x => x.textContent.includes('Закончить')); if (b) b.click(); }, 300);
   async function run(ids) {
     for (const id of ids) {
       const def = LESSONS.find(l => l.id === id), t0 = performance.now();

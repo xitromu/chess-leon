@@ -19,6 +19,11 @@ ART = {
     'g_balloons': ('r4_g_balloons', 200), 'g_cake': ('r4_g_cake', 160), 'g_chest': ('r4_g_chest', 160),
     'g_cup': ('r4_g_cup', 160), 'g_rocket': ('r4_g_rocket', 160), 'g_bubbles': ('r4_g_bubbles', 160),
     'g_wand': ('r4_g_wand', 160), 'g_paint': ('r4_g_paint', 160),
+    # 10 новых призов (выбор 29.10 по mockups/art/round5.html)
+    'g_medal': ('r5_medal37', 160), 'g_flowers': ('r5_flowers27', 160), 'g_confetti': ('r5_confetti27', 160),
+    'g_garland': ('r5_garland27', 220), 'g_drum': ('r5_drum27', 160), 'g_musicbox': ('r5_musicbox17', 160),
+    'g_hammock': ('r5_hammock27', 220), 'g_nightlight': ('r5_nightlight37', 160), 'g_house': ('r5_house27', 200),
+    'g_boardpaint': ('r5_boardpaint47', 160),
     'ant': ('r4_ant_mouth_s11', 96), 'fly': ('r4_fly2b', 96), 'worm': ('r4_worm', 96), 'beetle': ('../anim/beetle', 96),
     'bug': ('r4_lady317', 96), 'cater': ('r4_cater', 96), 'centi': ('../anim/centi', 96), 'hopper': ('r4_hopper', 96),
     'centi2': ('../anim/centi_walk11', 96), 'centi3': ('../anim/centi_walk21', 96),

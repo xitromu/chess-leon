@@ -315,16 +315,41 @@ R4 = [  # (имя, описание, зерно, чего избегать)
 ]
 
 
-def round4(pipe, note, only) -> None:
-    jobs = [j for j in R4 if not only or j[0] in only]
+# Пятый заход (29.10): 10 новых призов, по три варианта (зёрна 7, 17, 27). Запуск: make_art.py r5 [имена]
+R5_GIFTS = [  # (имя, описание, чего избегать)
+    ("medal", "shiny gold medal with a big star on a red and blue ribbon", "text, number"),
+    ("flowers", "small cute flower pot with colorful blooming flowers and green leaves", ""),
+    ("house", "cute small wooden house for little pets with a round door, tiny window and red roof", "person, dog"),
+    ("hammock", "small empty striped fabric hammock hanging between two short wooden posts", "person, character, animal"),
+    ("garland", "string of colorful glowing fairy light bulbs, festive garland, curved line", "christmas tree"),
+    ("confetti", "party popper cone bursting with colorful confetti and curly streamers", "person, hand"),
+    ("nightlight", "cute night lamp shaped like a smiling crescent moon with a little star, soft warm glow", "dark background"),
+    ("musicbox", "cute wooden music box with open lid, tiny golden crank handle on the side, little golden music notes",
+     "ballerina, person, text"),
+    ("drum", "cute toy drum, red with gold trim and white top, two wooden drumsticks crossed on top", "person, hand"),
+    ("boardpaint", "artist paint palette with bright paint blobs and a paintbrush, lying on a small checkered board tile",
+     "person, hand, text"),
+]
+R5 = [(f"{key}{s}", f"{what}, {GIFT}", s, avoid) for key, what, avoid in R5_GIFTS for s in (7, 17, 27)]
+# зерно 7 у всех дало узор из многих предметов — перерисовка зерном 37 с просьбой «один предмет»;
+# краски для доски вышли кашей — палитра без доски, зёрна 37, 47, 57. Запуск: make_art.py r5 fix
+ONE = "pattern, many, multiple, repeated, wallpaper, seamless, collection, set"
+R5_FIX = [(f"{key}37", f"one single {what}, alone, {GIFT}", 37, ", ".join(filter(None, [avoid, ONE])))
+          for key, what, avoid in R5_GIFTS if key != "boardpaint"]
+R5_FIX += [(f"boardpaint{s}", f"one single artist paint palette with round blobs of bright paint and a paintbrush, {GIFT}", s,
+            f"person, hand, text, {ONE}") for s in (37, 47, 57)]
+
+
+def round4(pipe, note, only, jobs_all=R4, prefix="r4") -> None:
+    jobs = [j for j in jobs_all if not only or j[0] in only or j[0].rstrip("0123456789") in only]
     for n, (key, what, seed, avoid) in enumerate(jobs, start=1):
         started = time.time()
         image = pipe(prompt=TOON + what, negative_prompt=", ".join(filter(None, [AVOID, avoid])),
                      width=SIZE, height=SIZE, num_inference_steps=STEPS, guidance_scale=GUIDANCE,
                      generator=torch.Generator("cpu").manual_seed(seed)).images[0]
-        image.save(OUT / f"r4_{key}_raw.png")
-        cut_background(image).save(OUT / f"r4_{key}.png")
-        note(f"SAVED {n}/{len(jobs)} r4_{key}.png ({time.time() - started:.0f} s)")
+        image.save(OUT / f"{prefix}_{key}_raw.png")
+        cut_background(image).save(OUT / f"{prefix}_{key}.png")
+        note(f"SAVED {n}/{len(jobs)} {prefix}_{key}.png ({time.time() - started:.0f} s)")
 
 
 def fix(args, note) -> None:
@@ -423,6 +448,9 @@ def main() -> None:
     note("MODEL LOADED")
     if style_filter == "r4":
         round4(pipe, note, subject_filter)
+    if style_filter == "r5":
+        fixing = "fix" in subject_filter
+        round4(pipe, note, subject_filter - {"fix"}, R5_FIX if fixing else R5, "r5")
     if style_filter == "r2":
         round2(pipe, note)
         jobs = []

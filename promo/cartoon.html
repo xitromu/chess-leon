@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><title>Leon cartoon</title>
+<style>
+  html, body { margin: 0; background: #fff; overflow: hidden; }
+  #stage { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; font-family: Rubik, "Segoe UI", sans-serif; color: #3a2a80; }
+  .a, .tx, .bub, .chip, .fx, .flyer { position: absolute; left: 0; top: 0; display: none; }
+  .flyer img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+  .tx { white-space: nowrap; font-weight: 700; line-height: 1.12; }
+  .tx span { display: inline-block; }
+  .tx .st { position: absolute; left: 0; top: 0; color: #fff; -webkit-text-stroke: .17em #fff; }
+  .tx .fi { position: relative; }
+  .bub { background: #fff; border-radius: 34px; padding: 18px 32px 20px; font-weight: 700; line-height: 1.16; white-space: pre; box-shadow: 0 8px 22px #4a3a8a33; text-align: center; }
+  .bub svg { position: absolute; top: calc(100% - 3px); width: 42px; height: 30px; }
+  .chip { width: 900px; box-sizing: border-box; background: #fff; border-radius: 42px; padding: 26px 36px; box-shadow: 0 12px 30px #4a3a8a33; font-size: 50px; font-weight: 700; line-height: 1.16; align-items: center; gap: 28px; }
+  .chip i { flex: none; width: 96px; height: 96px; font-style: normal; font-size: 78px; line-height: 96px; text-align: center; font-family: "Segoe UI Emoji"; }
+  .chip svg, .chip i img { width: 96px; height: 96px; object-fit: contain; display: block; }
+  #phone { position: absolute; left: 208px; top: 0; width: 664px; height: 1158px; background: #fff; border-radius: 74px; box-shadow: 0 26px 60px #4a3a8a55, inset 0 0 0 3px #e7e1fb; display: none; z-index: 9; }
+  #screen { position: absolute; left: 12px; top: 12px; width: 640px; height: 1134px; border-radius: 62px; overflow: hidden; background: #e4dcff; }
+  #screen img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+  #bg { position: absolute; inset: 0; background: linear-gradient(#cfeeff 0%, #e8f7ff 38%, #fff8dc 74%); z-index: 1; }
+  #hills { position: absolute; left: 0; top: 1300px; width: 1080px; height: 620px; z-index: 3; }
+  #sun { position: absolute; left: 930px; top: -110px; width: 240px; height: 240px; z-index: 2; }
+  .cloud { position: absolute; left: 0; top: 0; width: 240px; height: 70px; background: #fff; border-radius: 40px; opacity: .92; z-index: 2; }
+  .cloud:before, .cloud:after { content: ''; position: absolute; background: #fff; border-radius: 50%; }
+  .cloud:before { width: 100px; height: 100px; left: 34px; top: -50px; }
+  .cloud:after { width: 74px; height: 74px; left: 120px; top: -32px; }
+  #flash { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; background: #fff; z-index: 90; opacity: 0; }
+  #tongue { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; z-index: 33; display: none; overflow: visible; }
+</style></head>
+<body><div id="stage">
+  <div id="bg"></div>
+  <svg id="sun" viewBox="-120 -120 240 240"></svg>
+  <div class="cloud" id="c1"></div><div class="cloud" id="c2"></div><div class="cloud" id="c3"></div>
+  <svg id="hills" viewBox="0 0 1080 620" preserveAspectRatio="none">
+    <path d="M0 110 Q240 10 520 96 T1080 70 V620 H0Z" fill="#d6f2b4"/>
+    <path d="M0 210 Q330 120 640 196 T1080 170 V620 H0Z" fill="#c2ea9c"/>
+    <path d="M0 330 Q420 270 1080 320 V620 H0Z" fill="#aee08a"/>
+    <g fill="#fff"><circle cx="90" cy="420" r="7"/><circle cx="210" cy="520" r="6"/><circle cx="470" cy="440" r="6"/><circle cx="640" cy="560" r="7"/><circle cx="830" cy="420" r="6"/><circle cx="990" cy="530" r="7"/><circle cx="360" cy="580" r="6"/></g>
+    <g fill="#ffd34d"><circle cx="90" cy="420" r="3"/><circle cx="210" cy="520" r="2.6"/><circle cx="470" cy="440" r="2.6"/><circle cx="640" cy="560" r="3"/><circle cx="830" cy="420" r="2.6"/><circle cx="990" cy="530" r="3"/><circle cx="360" cy="580" r="2.6"/></g>
+  </svg>
+  <div id="phone"><div id="screen"><img id="f1" alt=""><img id="f2" alt=""></div></div>
+  <svg id="tongue" viewBox="0 0 1080 1920"><line stroke="#ff6f91" stroke-width="22" stroke-linecap="round"/><circle r="24" fill="#e8456f"/></svg>
+  <div id="flash"></div>
+</div>
+<script src="art/manifest.js"></script>
+<script src="story.js"></script>
+</body></html>
